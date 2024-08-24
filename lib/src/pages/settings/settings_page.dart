@@ -10,10 +10,10 @@ class Settings extends StatefulWidget {
   const Settings({super.key});
 
   @override
-  _SettingsState createState() => _SettingsState();
+  SettingsState createState() => SettingsState();
 }
 
-class _SettingsState extends State<Settings> {
+class SettingsState extends State<Settings> {
   late String titleAppBar;
   late String dropDownLangOption;
   static String horizontal = 'horizontal';
@@ -28,8 +28,9 @@ class _SettingsState extends State<Settings> {
   DataConfigurations? dataConfigurations;
   List<String>? magicList;
   int? previusValue;
+
   int getOption() {
-    log('Data Language: ${dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first]}');
+    //log('Data Language: ${dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first]}');
     return dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys
                 .elementAt(0)]['appbarTitle']['settings'] ==
             'Ajustes'
@@ -244,10 +245,12 @@ class _SettingsState extends State<Settings> {
                 ?.langStrings[dataConfigurations?.langStrings.keys.elementAt(0)]
             ['translate']['list'] as List<dynamic>)
         .cast<String>();
-    log('Data Language: $tmp');
     sharedPreferencesUtils.saveDataToSharedPreferences(
         dataConfigurations!, tmp);
     sharedPreferencesUtils.saveMagicListToSharedPreferences(tmp);
-    Navigator.pop(context);
+    Navigator.pop(context, {
+      'dataConfigurations': dataConfigurations,
+      'magicList': tmp
+    }); // Pass updated data back
   }
 }
