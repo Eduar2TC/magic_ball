@@ -3,8 +3,10 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:magic_ball/src/pages/models/app.state.dart';
 import 'package:magic_ball/src/utils/data.dart';
 import 'package:magic_ball/src/utils/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -23,19 +25,14 @@ class SettingsState extends State<Settings> {
   late double horizontalValue = 0;
   late double verticalValue = 0;
 
-  final SharedPreferencesUtils sharedPreferencesUtils =
-      SharedPreferencesUtils();
+  final SharedPreferencesUtils sharedPreferencesUtils = SharedPreferencesUtils();
   DataConfigurations? dataConfigurations;
   List<String>? magicList;
   int? previusValue;
 
   int getOption() {
     //log('Data Language: ${dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first]}');
-    return dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys
-                .elementAt(0)]['appbarTitle']['settings'] ==
-            'Ajustes'
-        ? 2
-        : 1;
+    return dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.elementAt(0)]['appbarTitle']['settings'] == 'Ajustes' ? 2 : 1;
   }
 
   @override
@@ -46,11 +43,9 @@ class SettingsState extends State<Settings> {
 
   void loadData() async {
     try {
-      dataConfigurations = await sharedPreferencesUtils
-          .getDataConfigurationsFromSharedPreferences();
+      dataConfigurations = await sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
       magicList = dataConfigurations?.listMagicOptionsStrings;
-      dataLanguage = dataConfigurations
-          ?.langStrings[dataConfigurations?.langStrings.keys.elementAt(0)];
+      dataLanguage = dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.elementAt(0)];
     } catch (e) {
       log('Error : $e');
     } finally {
@@ -60,15 +55,9 @@ class SettingsState extends State<Settings> {
 
   void swapLanguageStrings() {
     setState(() {
-      var temp = dataConfigurations
-          ?.langStrings[dataConfigurations?.langStrings.keys.first];
-      dataConfigurations
-              ?.langStrings[dataConfigurations?.langStrings.keys.first] =
-          dataConfigurations
-              ?.langStrings[dataConfigurations?.langStrings.keys.elementAt(1)];
-      dataConfigurations
-              ?.langStrings[dataConfigurations?.langStrings.keys.elementAt(1)] =
-          temp;
+      var temp = dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first];
+      dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first] = dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.elementAt(1)];
+      dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.elementAt(1)] = temp;
     });
   }
 
@@ -90,9 +79,7 @@ class SettingsState extends State<Settings> {
             statusBarColor: Colors.transparent,
           ),
           title: Text(
-            dataConfigurations
-                    ?.langStrings[dataConfigurations?.langStrings.keys.first]
-                ['appbarTitle']['settings'],
+            dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first]['appbarTitle']['settings'],
             style: TextStyle(color: dataConfigurations!.titleAppBarColor),
           ),
           backgroundColor: dataConfigurations?.appBarColor,
@@ -114,8 +101,7 @@ class SettingsState extends State<Settings> {
                   color: Colors.white12,
                   borderRadius: BorderRadius.circular(5),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 50, horizontal: 10),
+                padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 10),
                 child: FittedBox(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -123,10 +109,7 @@ class SettingsState extends State<Settings> {
                       Row(
                         children: [
                           Text(
-                            dataConfigurations?.langStrings[dataConfigurations
-                                ?.langStrings
-                                .keys
-                                .first]['dropDownOptionTitle'],
+                            dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first]['dropDownOptionTitle'],
                             style: GoogleFonts.roboto(
                               color: Colors.white,
                               fontStyle: FontStyle.normal,
@@ -151,17 +134,13 @@ class SettingsState extends State<Settings> {
                                 DropdownMenuItem(
                                   value: 1,
                                   child: Text(
-                                    dataConfigurations?.langStrings[
-                                        dataConfigurations?.langStrings.keys
-                                            .first]['dropDownOptionEnglish'],
+                                    dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first]['dropDownOptionEnglish'],
                                   ),
                                 ),
                                 DropdownMenuItem(
                                   value: 2,
                                   child: Text(
-                                    dataConfigurations?.langStrings[
-                                        dataConfigurations?.langStrings.keys
-                                            .first]['dropDownOptionSpanish'],
+                                    dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first]['dropDownOptionSpanish'],
                                   ),
                                 )
                               ],
@@ -241,16 +220,16 @@ class SettingsState extends State<Settings> {
   }
 
   void returnDataLanguage(BuildContext context) {
-    List<String> tmp = (dataConfigurations
-                ?.langStrings[dataConfigurations?.langStrings.keys.elementAt(0)]
-            ['translate']['list'] as List<dynamic>)
-        .cast<String>();
-    sharedPreferencesUtils.saveDataToSharedPreferences(
-        dataConfigurations!, tmp);
+    List<String> tmp = (dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.elementAt(0)]['translate']['list'] as List<dynamic>).cast<String>();
+    sharedPreferencesUtils.saveDataToSharedPreferences(dataConfigurations!, tmp);
     sharedPreferencesUtils.saveMagicListToSharedPreferences(tmp);
-    Navigator.pop(context, {
-      'dataConfigurations': dataConfigurations,
-      'magicList': tmp
-    }); // Pass updated data back
+    // Actualiza el estado del idioma usando el provider
+    Provider.of<AppState>(context, listen: false).updateDataConfigurations(dataConfigurations!);
+    Provider.of<AppState>(context, listen: false).updateMagicList(tmp);
+
+    // Guarda los datos actualizados
+    Provider.of<AppState>(context, listen: false).saveData();
+
+    Navigator.pop(context, {'dataConfigurations': dataConfigurations, 'magicList': tmp}); // Pass updated data back
   }
 }

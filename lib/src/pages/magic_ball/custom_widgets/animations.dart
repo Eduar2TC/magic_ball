@@ -1,44 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:magic_ball/src/pages/magic_ball/magic_ball_page.dart';
 
-class BallAnimations extends StatefulWidget {
+class BallAnimations {
   late Animation<double> animation0;
   late Animation<double> animation1;
   late AnimationController animationController0;
   late AnimationController animationController1;
+  final ValueNotifier<void> notifier;
 
-  BallAnimations({Key? key}) : super(key: key);
+  BallAnimations(this.notifier);
 
-  @override
-  State<BallAnimations> createState() => _BallAnimationsState();
-
-  void initializeAnimations(MagicBallState magicBallState) {
+  void initializeAnimations(TickerProvider vsync, VoidCallback playPop) {
     animationController0 = AnimationController(
-      vsync: magicBallState,
+      vsync: vsync,
       duration: const Duration(milliseconds: 1225),
     )
-      ..addListener(() => magicBallState.setState(() {}))
+      ..addListener(() => notifier.value = null)
       ..addStatusListener((status) {
-        //AnimationStatus gives the current status of our animation, we want to go back to its previous state after completing its animation
         if (status == AnimationStatus.forward) {
           animationController1.reverse();
         } else if (status == AnimationStatus.completed) {
-          animationController0
-              .reverse(); //reverse the animation back here if its completed
+          animationController0.reverse();
         } else if (status == AnimationStatus.dismissed) {
           animationController1.forward();
         }
       });
 
     animationController1 = AnimationController(
-      vsync: magicBallState,
+      vsync: vsync,
       duration: const Duration(milliseconds: 1000),
     )
-      ..addListener(() => magicBallState.setState(() {}))
+      ..addListener(() => notifier.value = null)
       ..addStatusListener((status) {
-        //AnimationStatus gives the current status of our animation, we want to go back to its previous state after completing its animation
         if (status == AnimationStatus.completed) {
-          //this.audio.playPop();
+          animationController1.duration = const Duration(milliseconds: 500);
+          playPop();
         }
       });
 
@@ -56,25 +51,9 @@ class BallAnimations extends StatefulWidget {
       ),
     );
   }
-}
 
-class _BallAnimationsState extends State<BallAnimations>
-    with TickerProviderStateMixin {
-  @override
-  void initState() {
-    widget.initializeAnimations(this as MagicBallState);
-    super.initState();
-  }
-
-  @override
   void dispose() {
-    widget.animationController0.dispose();
-    widget.animationController1.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BallAnimations();
+    animationController0.dispose();
+    animationController1.dispose();
   }
 }
