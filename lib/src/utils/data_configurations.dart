@@ -18,7 +18,7 @@ class DataConfigurations {
     required this.listMagicOptionsStrings,
     required this.langStrings,
   });
-
+  //TODO: extract this code configuration data to constants
   //String to JSON
   String toJson() => json.encode({
         'backgroundColor': backgroundColor.value,

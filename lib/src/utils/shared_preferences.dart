@@ -1,8 +1,10 @@
-import 'package:magic_ball/src/utils/data.dart';
+import 'package:magic_ball/src/constants/constants.dart';
+import 'package:magic_ball/src/utils/data_configurations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+//get data if it exist in shared preferences device , if not return predefined constant data
 class SharedPreferencesUtils {
-  Future<void> saveDataToSharedPreferences(DataConfigurations dataConfigurations, List<String> magicList) async {
+
+  Future<void> saveDataToSharedPreferences( DataConfigurations dataConfigurations, List<String> magicList) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     await sharedPreferences.setString(
       'dataConfigurations',
@@ -22,7 +24,8 @@ class SharedPreferencesUtils {
 
   Future<List<String>?> getMagicListFromSharedPreferences() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    return sharedPreferences.getStringList('magicList');
+    List<String>? magicList = sharedPreferences.getStringList('magicList');
+    return magicList ?? [];
   }
 
   Future<void> saveMagicListToSharedPreferences(List<String> magicList) async {

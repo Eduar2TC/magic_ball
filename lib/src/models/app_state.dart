@@ -1,5 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
-import 'package:magic_ball/src/utils/data.dart';
+import 'package:magic_ball/src/utils/data_configurations.dart';
 import 'package:magic_ball/src/utils/shared_preferences.dart';
 
 class AppState extends ChangeNotifier {
@@ -7,14 +9,21 @@ class AppState extends ChangeNotifier {
   List<String>? magicList;
   final SharedPreferencesUtils sharedPreferencesUtils = SharedPreferencesUtils();
 
-  AppStateProvider() {
+  AppState() {
     loadData();
   }
 
   Future<void> loadData() async {
-    dataConfigurations = await sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
-    magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
-    notifyListeners();
+    try {
+      dataConfigurations = await sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
+      magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+      if (dataConfigurations == null || magicList == null) {
+        log('Error: dataConfigurations or magicList is null');
+      }
+      notifyListeners();
+    } catch (e) {
+      log('Error loading data: $e');
+    }
   }
 
   void updateDataConfigurations(DataConfigurations newDataConfigurations) {
@@ -27,9 +36,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void saveData() {
+  Future<void> saveData() async {
     if (dataConfigurations != null && magicList != null) {
       sharedPreferencesUtils.saveDataToSharedPreferences(dataConfigurations!, magicList!);
     }
+    if (magicList != null) {
+      await sharedPreferencesUtils.saveMagicListToSharedPreferences(magicList!);
+    }
+    notifyListeners();
   }
 }

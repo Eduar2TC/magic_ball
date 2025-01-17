@@ -1,36 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:magic_ball/src/pages/models/app.state.dart';
-import 'package:magic_ball/src/utils/data.dart';
+import 'package:magic_ball/src/services/initialization_local_data_service.dart';
+import 'package:magic_ball/src/models/app_state.dart';
+import 'package:magic_ball/src/utils/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:magic_ball/src/routes/routes.dart';
-import 'package:magic_ball/src/utils/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final sharedPreferencesUtils = SharedPreferencesUtils();
-  final dataConfigurations = await sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
-  final magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+  InitializationService(sharedPreferencesUtils);
+  await InitializationService(sharedPreferencesUtils).initializeDataConfigurations();
+  await InitializationService(sharedPreferencesUtils).initializeMagicList();
 
   runApp(
     ChangeNotifierProvider(
-      create: (context) => AppState()
-        ..updateDataConfigurations(dataConfigurations ??
-            DataConfigurations(
-              backgroundColor: Colors.blue[300]!,
-              appBarColor: const Color(0xff10024f),
-              brightness: Brightness.dark,
-              titleAppBarColor: Colors.white,
-              listMagicOptionsStrings: magicList ?? [],
-              langStrings: {},
-            ))
-        ..updateMagicList(magicList ?? []),
+      create: (context) => AppState(),
       child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
