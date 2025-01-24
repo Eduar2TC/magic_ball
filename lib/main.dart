@@ -7,10 +7,10 @@ import 'package:magic_ball/src/routes/routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final sharedPreferencesUtils = SharedPreferencesUtils();
+  /*final sharedPreferencesUtils = SharedPreferencesUtils();
   InitializationService(sharedPreferencesUtils);
   await InitializationService(sharedPreferencesUtils).initializeDataConfigurations();
-  await InitializationService(sharedPreferencesUtils).initializeMagicList();
+  await InitializationService(sharedPreferencesUtils).initializeMagicList();*/
 
   runApp(
     ChangeNotifierProvider(
@@ -25,13 +25,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: '/home',
       routes: getAppRoutes(),
       theme: ThemeData(
-        primaryColor: context.watch<AppState>().dataConfigurations?.appBarColor,
-        brightness: context.watch<AppState>().dataConfigurations?.brightness,
+        primaryColor: appState.dataConfigurations?.appBarColor,
+        brightness: appState.dataConfigurations?.brightness,
       ),
     );
   }

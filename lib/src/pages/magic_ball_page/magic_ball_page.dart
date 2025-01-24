@@ -1,22 +1,23 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:magic_ball/src/models/app_state.dart';
+import 'package:magic_ball/src/pages/magic_ball_page/custom_widgets/animations.dart';
+import 'package:magic_ball/src/services/initialization_local_data_service.dart';
 import 'package:provider/provider.dart';
-import 'package:magic_ball/src/pages/magic_ball/custom_widgets/animations.dart';
 import 'package:magic_ball/src/utils/audio.dart';
 
 import 'custom_widgets/bubble_effect.dart';
 import 'custom_widgets/sphere_figure.dart';
 import 'custom_widgets/shaking_bubble_effect.dart';
 
-class MagicBall extends StatefulWidget {
-  const MagicBall({super.key});
+class MagicBallPage extends StatefulWidget {
+  const MagicBallPage({super.key});
 
   @override
-  MagicBallState createState() => MagicBallState();
+  MagicBallPageState createState() => MagicBallPageState();
 }
 
-class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
+class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMixin {
   late final Audio audio;
   String? magicAnswer;
   bool isOnPressed = false;
@@ -26,6 +27,7 @@ class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
   final ValueNotifier<String?> magicAnswerNotifier = ValueNotifier<String?>(null);
   final ValueNotifier<bool> showShakeBubblesNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> showBubbleEffectNotifier = ValueNotifier<bool>(false); //TODO: fix this functionallity
+  late Future<void> _iniDataFuture;
 
   @override
   void initState() {
@@ -37,6 +39,7 @@ class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
     Future.delayed(const Duration(milliseconds: 3500), () {
       showBubbleEffectNotifier.value = true;
     });
+    _iniDataFuture = _initDataService();
   }
 
   @override
@@ -50,18 +53,38 @@ class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  String getMagicWord(BuildContext context) {
+  Future<String?> getMagicWord(BuildContext context) async {
     final appState = Provider.of<AppState>(context, listen: false);
-    final magicList = appState.magicList;
-    if (magicList == null || magicList.isEmpty) {
-      return 'casa';
+          await appState.getMagicList();
+    if (appState.magicList == null || appState.magicList!.isEmpty) {
+      return 'Empty';
     }
-    return magicList[math.Random().nextInt(magicList.length)];
+    return appState.magicList?[math.Random().nextInt(appState.magicList!.length)];
   }
 
   @override
   Widget build(BuildContext context) {
     final dataConfigurations = Provider.of<AppState>(context).dataConfigurations;
+    return FutureBuilder(
+      future: _iniDataFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xff10024f),
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xff10024f)),
+              ),
+            ),
+          );
+        }
+        if (snapshot.hasError) {
+          return  Scaffold(
+            body: Center(
+              child: Text('Error loading data $snapshot.error '),
+            ),
+          );
+        }
         return Scaffold(
           backgroundColor: dataConfigurations?.backgroundColor,
           appBar: AppBar(
@@ -70,8 +93,8 @@ class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
                   dataConfigurations.langStrings.isNotEmpty &&
                   dataConfigurations.langStrings.keys.isNotEmpty
                   ? dataConfigurations.langStrings[dataConfigurations
-                  .langStrings.keys.first]
-              ['appbarTitle']['home'] ?? ''
+                  .langStrings.keys.first]['appbarTitle']['home'] ??
+                  ''
                   : '',
               style: TextStyle(color: dataConfigurations?.titleAppBarColor),
             ),
@@ -104,6 +127,8 @@ class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
             ),
           ),
         );
+      },
+    );
   }
 
   void handleMagicBallPress() {
@@ -114,7 +139,9 @@ class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
       audio.playShake();
 
       ballAnimations.animationController0.forward().then((_) {
-        magicAnswerNotifier.value = getMagicWord(context);
+        getMagicWord(context).then((value) {
+          magicAnswerNotifier.value = value;
+        });
         Future.delayed(const Duration(milliseconds: 1500), () {
           ballAnimations.animationController1.forward();
           isOnPressedNotifier.value = false;
@@ -195,8 +222,8 @@ class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.bold,
                     fontSize: magicAnswer == 'NO' ||
-                            magicAnswer == 'YES' ||
-                            magicAnswer == 'SI'
+                        magicAnswer == 'YES' ||
+                        magicAnswer == 'SI'
                         ? 40
                         : 20,
                     shadows: const [
@@ -228,9 +255,9 @@ class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
       builder: (context, showBubbles, child) {
         return showBubbles
             ? ShakingBubbleEffect(
-                size: bubblesContainerWith,
-                magicAnswer: magicAnswer ?? '',
-              )
+          size: bubblesContainerWith,
+          magicAnswer: magicAnswer ?? '',
+        )
             : Container();
       },
     );
@@ -276,10 +303,10 @@ class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
       builder: (context, showBubbleEffect, child) {
         return showBubbleEffect
             ? BubbleEffect(
-                width: MediaQuery.of(context).size.width * 0.4,
-                height: MediaQuery.of(context).size.width * 0.4,
-                numberOfBubbles: randomBubbles,
-              )
+          width: MediaQuery.of(context).size.width * 0.4,
+          height: MediaQuery.of(context).size.width * 0.4,
+          numberOfBubbles: randomBubbles,
+        )
             : Container();
       },
     );
@@ -289,5 +316,10 @@ class MagicBallState extends State<MagicBall> with TickerProviderStateMixin {
     const double amplitude = 20.0;
     const double frequency = 4.0;
     return amplitude * math.sin(frequency * 2 * math.pi * animation);
+  }
+
+  Future<void> _initDataService() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    InitializationService(appState.sharedPreferencesUtils);
   }
 }

@@ -5,44 +5,76 @@ import 'package:magic_ball/src/utils/data_configurations.dart';
 import 'package:magic_ball/src/utils/shared_preferences.dart';
 
 class AppState extends ChangeNotifier {
-  DataConfigurations? dataConfigurations;
-  List<String>? magicList;
-  final SharedPreferencesUtils sharedPreferencesUtils = SharedPreferencesUtils();
+  late DataConfigurations? dataConfigurations;
+  late List<String>? magicList;
+  late final SharedPreferencesUtils sharedPreferencesUtils;
 
   AppState() {
-    loadData();
+    _initializeSharedPreferencesUtils();
   }
-
-  Future<void> loadData() async {
-    try {
-      dataConfigurations = await sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
-      magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
-      if (dataConfigurations == null || magicList == null) {
-        log('Error: dataConfigurations or magicList is null');
-      }
-      notifyListeners();
-    } catch (e) {
-      log('Error loading data: $e');
+  Future<void> _initializeSharedPreferencesUtils() async {
+    try{
+      dataConfigurations = null;
+      magicList = null;
+      sharedPreferencesUtils = SharedPreferencesUtils();
+      await sharedPreferencesUtils.initializeSharedPreferences();  //load before data
+      await _loadData();
+    }catch(e){
+      log('Error initializing shared preferences utils: $e');
     }
   }
-
-  void updateDataConfigurations(DataConfigurations newDataConfigurations) {
-    dataConfigurations = newDataConfigurations;
+  Future<void> _loadData() async {
+    await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+    try{
+      dataConfigurations = await sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
+    } catch(e){
+      log('Error loading data configurations: $e');
+    }
+    try{
+      magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+    } catch(e){
+      log('Error loading magic list: $e');
+    }
     notifyListeners();
   }
 
-  void updateMagicList(List<String> newMagicList) {
-    magicList = newMagicList;
+  Future<void> getMagicList() async {
+    try{
+      magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+    } catch(e){
+      log('Error loading magic list: $e');
+    }
     notifyListeners();
   }
 
-  Future<void> saveData() async {
+  void updateDataConfigurations(DataConfigurations dataConfigurations) {
+   try{
+     this.dataConfigurations = dataConfigurations;
+     sharedPreferencesUtils.saveDataConfigurationsFromSharedPreferences(dataConfigurations);
+   }catch(e){
+      log('Error updating data configurations: $e');
+   }
+    notifyListeners();
+  }
+
+  void updateMagicList(List<String> magicList) {
+    try{
+      this.magicList = magicList;
+      sharedPreferencesUtils.saveMagicListToSharedPreferences(magicList);
+    }catch(e){
+      log('Error updating magic list: $e');
+    }
+    notifyListeners();
+  }
+
+  Future<void> saveAllData() async {
     if (dataConfigurations != null && magicList != null) {
-      sharedPreferencesUtils.saveDataToSharedPreferences(dataConfigurations!, magicList!);
+      sharedPreferencesUtils.saveAllDataToSharedPreferences(dataConfigurations!, magicList!);
     }
     if (magicList != null) {
       await sharedPreferencesUtils.saveMagicListToSharedPreferences(magicList!);
     }
     notifyListeners();
   }
+
 }

@@ -13,8 +13,8 @@ class Audio {
   initSources() {
     audioPlayer.setPlayerMode(PlayerMode.mediaPlayer);
     audioPlayer.setVolume(1.0);
-    _shakeBall = AssetSource('audio/sfx/shake.mp3');
-    _pop = AssetSource('audio/sfx/pop.wav');
+    _shakeBall = AssetSource('audio/ball/shake.mp3');
+    _pop = AssetSource('audio/ball/pop.wav');
   }
 
   void playShake() {

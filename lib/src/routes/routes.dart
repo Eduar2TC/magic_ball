@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:magic_ball/src/pages/magic_ball/magic_ball_page.dart';
-import 'package:magic_ball/src/pages/magic_list_settings/magic_list_settings_page.dart';
-import 'package:magic_ball/src/pages/settings/settings_page.dart';
+import 'package:magic_ball/src/pages/magic_ball_page/magic_ball_page.dart';
+import 'package:magic_ball/src/pages/magic_list_settings_page/magic_list_settings_page.dart';
+import 'package:magic_ball/src/pages/settings_page/settings_page.dart';
 
 Map<String, WidgetBuilder> getAppRoutes() {
   return <String, WidgetBuilder>{
     '/home': (BuildContext context) {
-      return const MagicBall();
+      return const MagicBallPage();
     },
     '/settings': (BuildContext context) {
       return const Settings();

@@ -1,13 +1,7 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:magic_ball/src/models/app_state.dart';
 import 'package:provider/provider.dart';
-//load data from shared preferences or use a default list
-//create a list view with the magic words
-//add a button to add a new magic word
-//add a button to remove a magic word
-//add a button to reset the magic words to the default list
-//add a button to save the magic words
-//add a button to cancel the changes
 
 class MagicListSettings extends StatefulWidget {
   const MagicListSettings({super.key});
@@ -45,13 +39,15 @@ class _MagicListSettingsState extends State<MagicListSettings> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 final appState = Provider.of<AppState>(context, listen: false);
-                final sharedPreferencesUtils = appState.sharedPreferencesUtils;
                 final magicWord = textEditingController.text;
-                if( magicWord.isNotEmpty ){
+                if( magicWord.isNotEmpty && appState.magicList != null) {
                   appState.magicList?.add(magicWord);
-                  appState.saveData();
+                  appState.updateMagicList(appState.magicList!);
+                  //appState.saveAllData();
+                  log('list from magic settings page ${appState.magicList}');
+                  if( !context.mounted ) return;
                   _showSnackBar(context, magicWord, 'Magic word added');
                 }
                 Navigator.of(context).pop();

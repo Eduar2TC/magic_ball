@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:magic_ball/src/models/app_state.dart';
 import 'package:magic_ball/src/utils/data_configurations.dart';
-import 'package:magic_ball/src/utils/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
 class Settings extends StatefulWidget {
@@ -26,15 +25,14 @@ class SettingsState extends State<Settings> {
   final ValueNotifier<double> verticalValueNotifier = ValueNotifier<double>(0);
   final ValueNotifier<Map?> dataConfigurationsNotifier = ValueNotifier<Map?>(null);
 
-  final SharedPreferencesUtils sharedPreferencesUtils = SharedPreferencesUtils();
   DataConfigurations? dataConfigurations;
   List<String>? magicList;
   int? previousValue;
 
   int getOption() {
     return dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys
-                .elementAt(0)]['appbarTitle']['settings'] ==
-            'Ajustes'
+        .elementAt(0)]['appbarTitle']['settings'] ==
+        'Ajustes'
         ? 2
         : 1;
   }
@@ -46,12 +44,11 @@ class SettingsState extends State<Settings> {
   }
 
   void loadData() async {
+    final appState = Provider.of<AppState>(context, listen: false);
     try {
-      dataConfigurations = await sharedPreferencesUtils
-          .getDataConfigurationsFromSharedPreferences();
+      dataConfigurations = appState.dataConfigurations;
       magicList = dataConfigurations?.listMagicOptionsStrings;
-      dataLanguage = dataConfigurations
-          ?.langStrings[dataConfigurations?.langStrings.keys.elementAt(0)];
+      dataLanguage = dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.elementAt(0)];
       dataConfigurationsNotifier.value = dataLanguage;
     } catch (e) {
       log('Error : $e');
@@ -59,16 +56,10 @@ class SettingsState extends State<Settings> {
   }
 
   void swapLanguageStrings() {
-    var temp = dataConfigurations
-        ?.langStrings[dataConfigurations?.langStrings.keys.first];
-    dataConfigurations
-            ?.langStrings[dataConfigurations?.langStrings.keys.first] =
-        dataConfigurations
-            ?.langStrings[dataConfigurations?.langStrings.keys.elementAt(1)];
-    dataConfigurations
-        ?.langStrings[dataConfigurations?.langStrings.keys.elementAt(1)] = temp;
-    dataConfigurationsNotifier.value = dataConfigurations
-        ?.langStrings[dataConfigurations?.langStrings.keys.first];
+    var temp = dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first];
+    dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first] = dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.elementAt(1)];
+    dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.elementAt(1)] = temp;
+    dataConfigurationsNotifier.value = dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.first];
   }
 
   @override
@@ -170,7 +161,7 @@ class SettingsState extends State<Settings> {
                                   builder: (context, dataLanguage, _) {
                                     return Text(
                                       dataLanguage?[
-                                              'dropDownOptionEnglish'] ??
+                                      'dropDownOptionEnglish'] ??
                                           '',
                                     );
                                   },
@@ -183,7 +174,7 @@ class SettingsState extends State<Settings> {
                                   builder: (context, dataLanguage, _) {
                                     return Text(
                                       dataLanguage?[
-                                              'dropDownOptionSpanish'] ??
+                                      'dropDownOptionSpanish'] ??
                                           '',
                                     );
                                   },
@@ -263,19 +254,19 @@ class SettingsState extends State<Settings> {
                       ],
                     ),
                     //option add more words to the magic list app
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Magic List',
-                        style: GoogleFonts.roboto(
-                          color: Colors.white,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Magic List',
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                            fontStyle: FontStyle.normal,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
                         ),
-                      ),
-                      IconButton(
+                        IconButton(
                           onPressed: (){
                             Navigator.pushNamed(context, '/magic_list_settings');
                           },
@@ -284,9 +275,9 @@ class SettingsState extends State<Settings> {
                               color: Colors.white,
                               size:  width*0.08
                           ),
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -298,18 +289,10 @@ class SettingsState extends State<Settings> {
   }
 
   void returnDataLanguage(BuildContext context) {
-    List<String> tmp = (dataConfigurations
-                ?.langStrings[dataConfigurations?.langStrings.keys.elementAt(0)]
-            ['translate']['list'] as List<dynamic>)
-        .cast<String>();
-    sharedPreferencesUtils.saveDataToSharedPreferences(
-        dataConfigurations!, tmp);
-    sharedPreferencesUtils.saveMagicListToSharedPreferences(tmp);
-    Provider.of<AppState>(context, listen: false)
-        .updateDataConfigurations(dataConfigurations!);
-    Provider.of<AppState>(context, listen: false).updateMagicList(tmp);
-    Provider.of<AppState>(context, listen: false).saveData();
-    Navigator.pop(
-        context, {'dataConfigurations': dataConfigurations, 'magicList': tmp});
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.dataConfigurations = dataConfigurations;
+    appState.updateMagicList(magicList!);
+    //appState.saveAllData();
+    Navigator.pop(context, {'dataConfigurations': appState.dataConfigurations, 'magicList': appState.magicList});
   }
 }

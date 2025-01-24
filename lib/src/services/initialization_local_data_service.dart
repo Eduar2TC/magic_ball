@@ -4,29 +4,53 @@ import 'package:magic_ball/src/utils/data_configurations.dart';
 import 'package:magic_ball/src/utils/shared_preferences.dart';
 
 class InitializationService {
-  final SharedPreferencesUtils sharedPreferencesUtils;
+  late final SharedPreferencesUtils sharedPreferencesUtils;
 
-  InitializationService(this.sharedPreferencesUtils);
+  InitializationService(this.sharedPreferencesUtils)  {
+    _initializeAll();
+  }
 
+  Future<void> _initializeAll() async {
+    await initializeDataConfigurations();
+    await initializeMagicList();
+  }
 
   /// Initializes the data configurations. If not present, it saves the default configurations.
   Future<DataConfigurations> initializeDataConfigurations() async {
-    var dataConfigurations = await sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
-    if (dataConfigurations == null) {
-      dataConfigurations = _getDefaultDataConfigurations();
-      await sharedPreferencesUtils.saveDataToSharedPreferences(dataConfigurations, english); //english is a predefined constant
+    //await sharedPreferencesUtils.initializeSharedPreferences();
+    try{
+      DataConfigurations? dataConfigurations = await sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
+      if (dataConfigurations == null) {
+        debugPrint('Error saving data configurations to shared preferences $dataConfigurations');
+        try{
+          dataConfigurations = _getDefaultDataConfigurations();
+          await sharedPreferencesUtils.saveDataConfigurationsFromSharedPreferences(dataConfigurations);
+        }catch(e){
+          return _getDefaultDataConfigurations();
+        }
+      }
+      debugPrint('Error INIT: $dataConfigurations');
+      return dataConfigurations;
+    } catch(e){
+      debugPrint('Error initializing data configurations: $e');
+      return _getDefaultDataConfigurations();
     }
-    return dataConfigurations;
+
   }
 
   /// Initializes the magic list. If not present, it saves an empty list.
-  Future<List<String>> initializeMagicList() async {
-    var magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
-    if (magicList == null) {
-      magicList = [];
-      await sharedPreferencesUtils.saveMagicListToSharedPreferences(magicList);
+  Future<List<String>?> initializeMagicList() async {
+    try{
+      List<String>? magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+      if (magicList == null) {
+         sharedPreferencesUtils.saveMagicListToSharedPreferences(english); //TODO : refactor logic resposibilities with shared preferences
+         magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+      }
+      return magicList;
+    } catch(e){
+      debugPrint('Error initializing magic list: $e');
+      return null;
     }
-    return magicList;
   }
 
   /// Returns the default data configurations.
