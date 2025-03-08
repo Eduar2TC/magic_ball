@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-
 import 'package:vector_math/vector_math.dart' as vector;
 /*TODO: Add config page. 1) Add Options bubble effect 1, More realist bubble effect 2) change the number of bubbles and the speed of the bubbles*/
 
@@ -18,21 +17,26 @@ class BubbleEffect extends StatefulWidget {
   BubbleEffectState createState() => BubbleEffectState();
 }
 
-class BubbleEffectState extends State<BubbleEffect>
-    with TickerProviderStateMixin {
+class BubbleEffectState extends State<BubbleEffect> with TickerProviderStateMixin {
   late final List<Bubble> bubbles;
   int get numberOfBubbles => widget.numberOfBubbles;
 
   @override
   void initState() {
     super.initState();
-    bubbles = List.generate(numberOfBubbles,
-        (index) => Bubble(width: widget.width, height: widget.height));
+    bubbles = List.generate(numberOfBubbles, (index) =>
+        Bubble(width: widget.width, height: widget.height));
     bubbles.forEach((bubble) {
       bubble.controller = AnimationController(
         duration: Duration(seconds: bubble.durationInSeconds),
         vsync: this,
-      )..repeat();
+      )..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          bubble.updatePosition();
+          bubble.controller.forward(from: 0.0);
+        }
+      });
+      bubble.controller.forward();
     });
   }
 
@@ -44,24 +48,22 @@ class BubbleEffectState extends State<BubbleEffect>
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          //color: Colors.blue.withOpacity(0.3),
-        ),
-        child: ClipOval(
-          child: Stack(
-            children: [
-              ...bubbles.map((bubble) => _buildAnimatedBubble(bubble)),
-              /*MagicTetrahedron(
-                onAnimationComplete: () {},
-              ),*/
-              //const AnimatedTetrahedron(), //<--- TODO: MODIFY THIS ANIMATION
-            ],
-          ),
+    return Container(
+      width: widget.width,
+      height: widget.height,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        //color: Colors.blue.withOpacity(0.3),
+      ),
+      child: ClipOval(
+        child: Stack(
+          children: [
+            ...bubbles.map((bubble) => _buildAnimatedBubble(bubble)),
+            /*MagicTetrahedron(
+              onAnimationComplete: () {},
+            ),*/
+            //const AnimatedTetrahedron(), //<--- TODO: MODIFY THIS ANIMATION
+          ],
         ),
       ),
     );
@@ -70,19 +72,21 @@ class BubbleEffectState extends State<BubbleEffect>
   Widget _buildAnimatedBubble(Bubble bubble) {
     return AnimatedBuilder(
       animation: bubble.controller,
-      builder: (context, child) {
+      builder: (context, _) {
         final value = bubble.controller.value;
         final newY = bubble.initialY - (widget.height * value);
+
         return Positioned(
+          key: ValueKey(bubble),
           left: bubble.x,
           top: newY % widget.height - bubble.size,
           child: Opacity(
             opacity: bubble.opacity,
             child: TweenAnimationBuilder(
-              tween: Tween<double>(begin: 0, end: 1),
+              tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(seconds: 3),
               curve: Curves.easeInOut,
-              builder: (context, value, child) {
+              builder: (context, value, _) {
                 //scale bubble initially
                 return Transform.scale(
                   scale: value,
@@ -124,8 +128,11 @@ class Bubble {
         opacity = Random().nextDouble() * 0.3 + 0.2;
 
   void updatePosition() {
-    x = Random().nextInt(width.toInt()).toDouble();
-    initialY = Random().nextInt(height.toInt()).toDouble();
+    x = random.nextInt(width.toInt()).toDouble();
+    initialY = height;
+    opacity = random.nextDouble() * 0.3 + 0.2;
+    durationInSeconds = random.nextInt(10) + 5;
+    size = random.nextInt(20).toDouble() + 2;
   }
 }
 /*

@@ -17,16 +17,13 @@ class Settings extends StatefulWidget {
 class SettingsState extends State<Settings> {
   late String titleAppBar;
   late String dropDownLangOption;
-  static String horizontal = 'horizontal';
-  static String vertical = 'vertical';
 
   late Map dataLanguage;
-  final ValueNotifier<double> horizontalValueNotifier = ValueNotifier<double>(0);
-  final ValueNotifier<double> verticalValueNotifier = ValueNotifier<double>(0);
   final ValueNotifier<Map?> dataConfigurationsNotifier = ValueNotifier<Map?>(null);
 
   DataConfigurations? dataConfigurations;
   List<String>? magicList;
+
   int? previousValue;
 
   int getOption() {
@@ -64,8 +61,6 @@ class SettingsState extends State<Settings> {
 
   @override
   void dispose() {
-    horizontalValueNotifier.dispose();
-    verticalValueNotifier.dispose();
     dataConfigurationsNotifier.dispose();
     super.dispose();
   }
@@ -75,7 +70,6 @@ class SettingsState extends State<Settings> {
     final appState = Provider.of<AppState>(context);
     final dataConfigurations = appState.dataConfigurations;
     final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (boolean, result) async {
@@ -197,67 +191,6 @@ class SettingsState extends State<Settings> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          horizontal,
-                          style: GoogleFonts.roboto(
-                            color: Colors.white,
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                        ValueListenableBuilder<double>(
-                          valueListenable: horizontalValueNotifier,
-                          builder: (context, horizontalValue, child) {
-                            return Slider(
-                              activeColor: Colors.white70,
-                              value: horizontalValue,
-                              min: 0,
-                              max: 1,
-                              divisions: 5,
-                              label: horizontalValue.toString(),
-                              onChanged: (double newRating) {
-                                horizontalValueNotifier.value = newRating;
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          vertical,
-                          style: GoogleFonts.roboto(
-                            color: Colors.white,
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                        ValueListenableBuilder<double>(
-                          valueListenable: verticalValueNotifier,
-                          builder: (context, verticalValue, child) {
-                            return Slider(
-                              activeColor: Colors.white70,
-                              value: verticalValue,
-                              min: 0,
-                              max: 1,
-                              divisions: 5,
-                              label: verticalValue.toString(),
-                              onChanged: (double newRating) {
-                                verticalValueNotifier.value = newRating;
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    //option add more words to the magic list app
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
                           'Magic List',
                           style: GoogleFonts.roboto(
                             color: Colors.white,
@@ -278,6 +211,26 @@ class SettingsState extends State<Settings> {
                         ),
                       ],
                     ),
+                    //Switch Shake to get answer
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Shake to get answer',
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                            fontStyle: FontStyle.normal,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
+                        Switch(
+                          value: true,
+                          onChanged: (bool value) {},
+                          activeColor: Colors.white,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -291,8 +244,6 @@ class SettingsState extends State<Settings> {
   void returnDataLanguage(BuildContext context) {
     final appState = Provider.of<AppState>(context, listen: false);
     appState.dataConfigurations = dataConfigurations;
-    appState.updateMagicList(magicList!);
-    //appState.saveAllData();
     Navigator.pop(context, {'dataConfigurations': appState.dataConfigurations, 'magicList': appState.magicList});
   }
 }

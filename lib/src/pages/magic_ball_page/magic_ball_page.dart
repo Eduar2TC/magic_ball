@@ -9,6 +9,9 @@ import 'package:magic_ball/src/utils/audio.dart';
 import 'custom_widgets/bubble_effect.dart';
 import 'custom_widgets/sphere_figure.dart';
 import 'custom_widgets/shaking_bubble_effect.dart';
+import 'package:vector_math/vector_math_64.dart' show Quaternion, Vector3, Vector4;
+
+import 'custom_widgets/triangle.dart';
 
 class MagicBallPage extends StatefulWidget {
   const MagicBallPage({super.key});
@@ -55,7 +58,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
 
   Future<String?> getMagicWord(BuildContext context) async {
     final appState = Provider.of<AppState>(context, listen: false);
-          await appState.getMagicList();
+    await appState.getMagicList();
     if (appState.magicList == null || appState.magicList!.isEmpty) {
       return 'Empty';
     }
@@ -79,7 +82,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
           );
         }
         if (snapshot.hasError) {
-          return  Scaffold(
+          return Scaffold(
             body: Center(
               child: Text('Error loading data $snapshot.error '),
             ),
@@ -89,17 +92,14 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
           backgroundColor: dataConfigurations?.backgroundColor,
           appBar: AppBar(
             title: Text(
-              dataConfigurations != null &&
-                  dataConfigurations.langStrings.isNotEmpty &&
-                  dataConfigurations.langStrings.keys.isNotEmpty
+              dataConfigurations != null && dataConfigurations.langStrings.isNotEmpty &&
+                      dataConfigurations.langStrings.keys.isNotEmpty
                   ? dataConfigurations.langStrings[dataConfigurations
-                  .langStrings.keys.first]['appbarTitle']['home'] ??
-                  ''
+                          .langStrings.keys.first]['appbarTitle']['home'] ?? ''
                   : '',
               style: TextStyle(color: dataConfigurations?.titleAppBarColor),
             ),
-            backgroundColor: dataConfigurations?.appBarColor ??
-                const Color(0xff10024f),
+            backgroundColor:dataConfigurations?.appBarColor ?? const Color(0xff10024f),
             centerTitle: true,
             actions: [
               IconButton(
@@ -138,24 +138,27 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
       showBubbleEffectNotifier.value = false;
       audio.playShake();
 
-      ballAnimations.animationController0.forward().then((_) {
+      ballAnimations.ballAnimationController.forward().then((_) {
+        //TODO: REFACTORIZE THIS
         getMagicWord(context).then((value) {
           magicAnswerNotifier.value = value;
         });
         Future.delayed(const Duration(milliseconds: 1500), () {
-          ballAnimations.animationController1.forward();
+          ballAnimations.answerAnimationController.forward();
           isOnPressedNotifier.value = false;
           //show bubbles
-          ballAnimations.animation0.isAnimating
+          ballAnimations.ballAnimation.isAnimating
               ? showShakeBubblesNotifier.value = true
               : showShakeBubblesNotifier.value = false;
-          ballAnimations.animation0.isAnimating
+          ballAnimations.ballAnimation.isAnimating
               ? showBubbleEffectNotifier.value = false
               : showBubbleEffectNotifier.value = true;
-        });
-        //hide magic response
-        Future.delayed(const Duration(milliseconds: 3000), () {
-          ballAnimations.animationController1.reverse();
+        }).then((_) {
+          //Hide magic response
+          Future.delayed(const Duration(milliseconds: 3000), () {
+            ballAnimations.answerAnimationController.reverse();
+
+          });
         });
       });
     }
@@ -186,12 +189,12 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
           child: Transform.rotate(
             angle: (2 * math.pi) * value,
             child: AnimatedBuilder(
-              animation: ballAnimations.animation0,
-              builder: (context, child) {
+              animation: ballAnimations.ballAnimation,
+              builder: (context, _) {
                 return Transform.translate(
                   offset: Offset(
-                    bounce(ballAnimations.animation0.value),
-                    math.sin(ballAnimations.animation0.value * 500) * 25,
+                    bounce(ballAnimations.ballAnimation.value),
+                    math.sin(ballAnimations.ballAnimation.value * 500) * 25,
                   ),
                   child: SphereFigure(size: sphereWidth),
                 );
@@ -203,46 +206,89 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
     );
   }
 
+  double magicAnswerCounter(String? magicAnswer) {
+    if (magicAnswer != null) {
+      if (magicAnswer.length <= 3) {
+        return 60;
+      }
+    }
+    return 20;
+  }
+
+  FractionalOffset calculateFractionalOffset(double angle) {
+    final x = 0.5 + 0.5 * math.cos(angle);
+    final y = 0.5 + 0.5 * math.sin(angle);
+    return FractionalOffset(x, y);
+  }
+
   Widget buildMagicAnswer() {
     return ValueListenableBuilder<String?>(
       valueListenable: magicAnswerNotifier,
-      builder: (context, magicAnswer, child) {
-        return AnimatedBuilder(
-          animation: ballAnimations.animation1,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, 10 * ballAnimations.animation1.value),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 0),
-                opacity: ballAnimations.animation1.value,
-                child: Text(
-                  magicAnswer ?? '',
-                  style: TextStyle(
-                    color: Colors.white30,
-                    fontStyle: FontStyle.normal,
-                    fontWeight: FontWeight.bold,
-                    fontSize: magicAnswer == 'NO' ||
-                        magicAnswer == 'YES' ||
-                        magicAnswer == 'SI'
-                        ? 40
-                        : 20,
-                    shadows: const [
-                      Shadow(
-                        offset: Offset(3, 3),
-                        blurRadius: 3.0,
-                        color: Color.fromARGB(40, 35, 125, 0),
-                      ),
-                      Shadow(
-                        offset: Offset(5.0, 5.0),
-                        blurRadius: 8.0,
-                        color: Color.fromARGB(40, 35, 125, 255),
-                      ),
-                    ],
+      builder: (context, magicAnswer, _) {
+        final randomZAngle = (math.Random().nextDouble() * (math.pi / 4)) + (-math.pi / 4); // random z between 45 to 90 degrees
+        final alternateRotationDirection = math.Random().nextBool();
+        return ClipOval(
+          clipBehavior: Clip.antiAlias,
+          child: AnimatedBuilder(
+            animation: ballAnimations.answerAnimation,
+            builder: (context, _) {
+              double h = math.sqrt(3) / 2 * MediaQuery.of(context).size.width * 0.4;
+              double xOffset = (h / 3) * math.sin(randomZAngle);
+              double yOffset = (h / 3) * (1 - math.cos(randomZAngle));
+              return Transform.translate(
+                offset: Offset(0, ballAnimations.answerAnimation.value),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 0),
+                  opacity: ballAnimations.answerAnimation.value,
+                  child: Transform(
+                    alignment: FractionalOffset.lerp(
+                      FractionalOffset.topLeft,
+                      FractionalOffset.bottomRight,
+                      0.5,
+                    ), //rotation from top center
+                    // 3D rotation effect
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.001)
+                      ..translate(0.0,-100.0 * (1 - ballAnimations.answerAnimation.value),0.0,)
+                      ..setRotationZ( alternateRotationDirection ? randomZAngle * ballAnimations.answerAnimation.value
+                            : -randomZAngle * ballAnimations.answerAnimation.value,
+                      )
+                      ..scale( 1.5 - math.cos(ballAnimations.answerAnimation.value *math.pi *0.3) * 1.0) //animation 1
+                    //..scale(math.cos( 0.3 * ballAnimations.answerAnimation.value)) //animation 2
+                    //..rotateX(randomZAngle * ballAnimations.answerAnimation.value) //animation 3
+                    ,
+                    child: MagicBallTriangle(
+                      magicAnswer: magicAnswer ?? '',
+                      size: MediaQuery.of(context).size.width * 0.4,
+                    ),
+                    /*
+                    Text(
+                    magicAnswer ?? '',
+                    style: TextStyle(
+                      color: Colors.white30,
+                      fontStyle: FontStyle.normal,
+                      fontWeight: FontWeight.bold,
+                      fontSize: magicAnswerCounter(magicAnswer),
+                      shadows: const [
+                        Shadow(
+                          offset: Offset(3, 3),
+                          blurRadius: 3.0,
+                          color: Color.fromARGB(40, 35, 125, 0),
+                        ),
+                        Shadow(
+                          offset: Offset(5.0, 5.0),
+                          blurRadius: 8.0,
+                          color: Color.fromARGB(40, 35, 125, 255),
+                        ),
+                      ],
+                    ),
+                  ),
+                     */
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );
@@ -252,12 +298,12 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
     final bubblesContainerWith = MediaQuery.of(context).size.width * 0.40;
     return ValueListenableBuilder<bool>(
       valueListenable: showShakeBubblesNotifier,
-      builder: (context, showBubbles, child) {
+      builder: (context, showBubbles, _) {
         return showBubbles
             ? ShakingBubbleEffect(
-          size: bubblesContainerWith,
-          magicAnswer: magicAnswer ?? '',
-        )
+                size: bubblesContainerWith,
+                magicAnswer: magicAnswer ?? '',
+              )
             : Container();
       },
     );
@@ -285,7 +331,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
                 BoxShadow(
                   blurStyle: BlurStyle.inner,
                   blurRadius: 100,
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                 ),
               ],
             ),
@@ -300,13 +346,13 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
     int randomBubbles = math.Random().nextInt(3) + 2;
     return ValueListenableBuilder(
       valueListenable: showBubbleEffectNotifier,
-      builder: (context, showBubbleEffect, child) {
+      builder: (context, showBubbleEffect, _) {
         return showBubbleEffect
             ? BubbleEffect(
-          width: MediaQuery.of(context).size.width * 0.4,
-          height: MediaQuery.of(context).size.width * 0.4,
-          numberOfBubbles: randomBubbles,
-        )
+                width: MediaQuery.of(context).size.width * 0.4,
+                height: MediaQuery.of(context).size.width * 0.4,
+                numberOfBubbles: randomBubbles,
+              )
             : Container();
       },
     );

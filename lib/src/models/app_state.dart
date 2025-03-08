@@ -5,33 +5,46 @@ import 'package:magic_ball/src/utils/data_configurations.dart';
 import 'package:magic_ball/src/utils/shared_preferences.dart';
 
 class AppState extends ChangeNotifier {
-  late DataConfigurations? dataConfigurations;
-  late List<String>? magicList;
-  late final SharedPreferencesUtils sharedPreferencesUtils;
+  late DataConfigurations? _dataConfigurations;
+  late List<String>? _magicList;
+  late final SharedPreferencesUtils _sharedPreferencesUtils;
 
   AppState() {
     _initializeSharedPreferencesUtils();
   }
   Future<void> _initializeSharedPreferencesUtils() async {
     try{
-      dataConfigurations = null;
-      magicList = null;
-      sharedPreferencesUtils = SharedPreferencesUtils();
-      await sharedPreferencesUtils.initializeSharedPreferences();  //load before data
+      _dataConfigurations = null;
+      _magicList = null;
+      _sharedPreferencesUtils = SharedPreferencesUtils();
+      await _sharedPreferencesUtils.initializeSharedPreferences();  //load before data
       await _loadData();
     }catch(e){
       log('Error initializing shared preferences utils: $e');
     }
   }
+  //Setters and Getters
+  DataConfigurations? get dataConfigurations => _dataConfigurations;
+  List<String>? get magicList => _magicList;
+  SharedPreferencesUtils get sharedPreferencesUtils => _sharedPreferencesUtils;
+  set dataConfigurations(DataConfigurations? dataConfigurations) {
+    _dataConfigurations = dataConfigurations;
+    notifyListeners();
+  }
+  set magicList(List<String>? magicList) {
+    _magicList = magicList;
+    notifyListeners();
+  }
+
   Future<void> _loadData() async {
-    await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+    await _sharedPreferencesUtils.getMagicListFromSharedPreferences();
     try{
-      dataConfigurations = await sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
+      _dataConfigurations = await _sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
     } catch(e){
       log('Error loading data configurations: $e');
     }
     try{
-      magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+      _magicList = await _sharedPreferencesUtils.getMagicListFromSharedPreferences();
     } catch(e){
       log('Error loading magic list: $e');
     }
@@ -40,7 +53,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> getMagicList() async {
     try{
-      magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+      _magicList = await _sharedPreferencesUtils.getMagicListFromSharedPreferences();
     } catch(e){
       log('Error loading magic list: $e');
     }
@@ -49,32 +62,55 @@ class AppState extends ChangeNotifier {
 
   void updateDataConfigurations(DataConfigurations dataConfigurations) {
    try{
-     this.dataConfigurations = dataConfigurations;
-     sharedPreferencesUtils.saveDataConfigurationsFromSharedPreferences(dataConfigurations);
+     _dataConfigurations = dataConfigurations;
+     _sharedPreferencesUtils.saveDataConfigurationsFromSharedPreferences(dataConfigurations);
    }catch(e){
       log('Error updating data configurations: $e');
    }
     notifyListeners();
   }
 
-  void updateMagicList(List<String> magicList) {
-    try{
-      this.magicList = magicList;
-      sharedPreferencesUtils.saveMagicListToSharedPreferences(magicList);
-    }catch(e){
+  void updateMagicList(String magicWord) {
+    try {
+      final index = _searchWordAndReturnIndexInMagicList(magicWord);
+      if (index == -1) {
+        _magicList?.add(magicWord.toUpperCase()); //Add
+      } else {
+        _magicList?[index] = magicWord.toUpperCase(); //Update
+      }
+      _sharedPreferencesUtils.saveMagicListToSharedPreferences(_magicList!); //Save
+    } catch (e) {
       log('Error updating magic list: $e');
     }
     notifyListeners();
   }
 
   Future<void> saveAllData() async {
-    if (dataConfigurations != null && magicList != null) {
-      sharedPreferencesUtils.saveAllDataToSharedPreferences(dataConfigurations!, magicList!);
+    if (_dataConfigurations != null && _magicList != null) {
+      _sharedPreferencesUtils.saveAllDataToSharedPreferences(_dataConfigurations!, _magicList!);
     }
-    if (magicList != null) {
-      await sharedPreferencesUtils.saveMagicListToSharedPreferences(magicList!);
+    if (_magicList != null) {
+      await _sharedPreferencesUtils.saveMagicListToSharedPreferences(_magicList!);
     }
     notifyListeners();
   }
 
+  void removeMagicWord(String magicWord) {
+    try {
+      final index = _searchWordAndReturnIndexInMagicList(magicWord.toUpperCase());
+      if (index != -1) {
+        _magicList?.removeAt(index);
+        _sharedPreferencesUtils.saveMagicListToSharedPreferences(_magicList!);
+      } else {
+        log('Magic word not found: $magicWord');
+      }
+    } catch (e) {
+      log('Error removing magic word: $e');
+    }
+    notifyListeners();
+  }
+
+  int _searchWordAndReturnIndexInMagicList(String magicWord) {
+    return _magicList!.indexWhere((element) => element == magicWord);
+  }
 }

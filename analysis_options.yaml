@@ -26,3 +26,12 @@ linter:
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+analyzer:
+  exclude:
+    - "lib/generated_plugin_registrant.dart"
+    - "lib/**/*.g.dart"  # Archivos generados por freezed/json_serializable
+    - "lib/**/*.mocks.dart"  # Archivos de mock
+    - "lib/generated/**"  # Archivos generados por Flutter
+    - "**/*.freezed.dart"
+    - "**/*.config.dart"
+    - "**/*.gr.dart"

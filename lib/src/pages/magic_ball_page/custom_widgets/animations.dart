@@ -1,59 +1,59 @@
 import 'package:flutter/material.dart';
 
 class BallAnimations {
-  late Animation<double> animation0;
-  late Animation<double> animation1;
-  late AnimationController animationController0;
-  late AnimationController animationController1;
-  final ValueNotifier<void> notifier;
+  late Animation<double> ballAnimation; //animation0
+  late Animation<double> answerAnimation; //animation1
+  late AnimationController ballAnimationController; //controller0
+  late AnimationController answerAnimationController; //controller1
+  final ValueNotifier<void> stateNotifier;
 
-  BallAnimations(this.notifier);
+  BallAnimations(this.stateNotifier);
 
-  void initializeAnimations(TickerProvider vsync, VoidCallback playPop) {
-    animationController0 = AnimationController(
+  void initializeAnimations(TickerProvider vsync, VoidCallback playPopSound) {
+    ballAnimationController = AnimationController(
       vsync: vsync,
       duration: const Duration(milliseconds: 1225),
     )
-      ..addListener(() => notifier.value = null)
+      ..addListener(() => stateNotifier.value = null)
       ..addStatusListener((status) {
         if (status == AnimationStatus.forward) {
-          animationController1.reverse();
+          answerAnimationController.reverse();
         } else if (status == AnimationStatus.completed) {
-          animationController0.reverse();
+         ballAnimationController.reverse();
         } else if (status == AnimationStatus.dismissed) {
-          animationController1.forward();
+          answerAnimationController.forward();
         }
       });
 
-    animationController1 = AnimationController(
+    answerAnimationController = AnimationController(
       vsync: vsync,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1500),
     )
-      ..addListener(() => notifier.value = null)
+      ..addListener(() => stateNotifier.value = null)
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          animationController1.duration = const Duration(milliseconds: 500);
-          playPop();
+          answerAnimationController.duration = const Duration(milliseconds: 500);
+          playPopSound();
         }
       });
 
-    animation0 = Tween<double>(begin: 0.0, end: 1.0).animate(
+    ballAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: animationController0,
+        parent: ballAnimationController,
         curve: Curves.easeInOut,
       ),
     );
 
-    animation1 = Tween<double>(begin: 0.0, end: 1.0).animate(
+    answerAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: animationController1,
+        parent: answerAnimationController,
         curve: Curves.easeInOut,
       ),
     );
   }
 
   void dispose() {
-    animationController0.dispose();
-    animationController1.dispose();
+    ballAnimationController.dispose();
+    answerAnimationController.dispose();
   }
 }

@@ -11,7 +11,6 @@ class MagicListSettings extends StatefulWidget {
 }
 
 class _MagicListSettingsState extends State<MagicListSettings> {
-
   @override
   void dispose() {
     super.dispose();
@@ -42,13 +41,15 @@ class _MagicListSettingsState extends State<MagicListSettings> {
               onPressed: () async {
                 final appState = Provider.of<AppState>(context, listen: false);
                 final magicWord = textEditingController.text;
-                if( magicWord.isNotEmpty && appState.magicList != null) {
-                  appState.magicList?.add(magicWord);
-                  appState.updateMagicList(appState.magicList!);
-                  //appState.saveAllData();
+                if (magicWord.isNotEmpty && appState.magicList != null) {
+                  appState.updateMagicList(magicWord);
                   log('list from magic settings page ${appState.magicList}');
-                  if( !context.mounted ) return;
-                  _showSnackBar(context, magicWord, 'Magic word added');
+                  if (!context.mounted) return;
+                  _showSnackBar(context, magicWord, 'Magic word added', () {
+
+                    appState.saveAllData();
+                    appState.removeMagicWord(magicWord);
+                  });
                 }
                 Navigator.of(context).pop();
               },
@@ -59,10 +60,56 @@ class _MagicListSettingsState extends State<MagicListSettings> {
       },
     );
   }
-  //Snackbar to show a message when the magic word is removed or added
-  void _showSnackBar(BuildContext context, String magicWord, String message) {
-    if( magicWord.isNotEmpty) {
 
+  void _showEditMagicWordDialog(String currentMagicWord, int index) {
+    TextEditingController textEditingController = TextEditingController(text: currentMagicWord);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).primaryColor,
+          title: const Text('Edit Magic Word'),
+          content: TextField(
+            controller: textEditingController,
+            decoration: const InputDecoration(
+              hintText: 'Enter a magic word',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final appState = Provider.of<AppState>(context, listen: false);
+                final newMagicWord = textEditingController.text;
+                final oldMagicWord = appState.magicList![index];
+                if (newMagicWord.isNotEmpty && appState.magicList != null) {
+                  appState.magicList![index] = newMagicWord;
+                  appState.saveAllData();
+                  log('list from magic settings page ${appState.magicList}');
+                  if (!context.mounted) return;
+                  _showSnackBar(context, newMagicWord, 'Magic word updated', () {
+                    appState.magicList![index] = oldMagicWord;
+                    appState.saveAllData();
+                  });
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  //Snack bar to show a message when the magic word is removed or added
+  void _showSnackBar(BuildContext context, String magicWord, String message, VoidCallback undoCallback) {
+    if (magicWord.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -70,13 +117,11 @@ class _MagicListSettingsState extends State<MagicListSettings> {
           backgroundColor: Theme.of(context).colorScheme.secondary,
           action: SnackBarAction(
             label: 'Undo',
-            onPressed: () {
-            },
+            onPressed: undoCallback, //undo changes
           ),
         ),
       );
     }
-    
   }
 
   @override
@@ -89,6 +134,7 @@ class _MagicListSettingsState extends State<MagicListSettings> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Magic Words'),
+        centerTitle: true,
         backgroundColor: Theme.of(context).primaryColor,
       ),
       body: SafeArea(
@@ -104,7 +150,8 @@ class _MagicListSettingsState extends State<MagicListSettings> {
           child: CustomScrollView(
             slivers: [
               SliverList(
-                delegate: SliverChildBuilderDelegate( (context, index) {
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
                     return ListTile(
                       title: Text(magicList?[index] ?? ''),
                       trailing: Row(
@@ -112,11 +159,27 @@ class _MagicListSettingsState extends State<MagicListSettings> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.edit),
-                            onPressed: () {},
+                            onPressed: () {
+                              final magicWord = magicList?[index];
+                              if (magicWord != null) {
+                                _showEditMagicWordDialog(magicWord, index);
+                              }
+                            },
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete),
-                            onPressed: () {},
+                            onPressed: () {
+                              final magicWord = magicList?[index];
+                              if (magicWord != null) {
+                                final originalIndex = index;
+                                if (!context.mounted) return;
+                                _showSnackBar(context, magicWord, 'Magic word removed', () {
+                                  appState.magicList!.insert(originalIndex, magicWord);
+                                  appState.saveAllData();
+                                });
+                                appState.removeMagicWord(magicWord);
+                              }
+                            },
                           ),
                         ],
                       ),
@@ -129,10 +192,8 @@ class _MagicListSettingsState extends State<MagicListSettings> {
           ),
         ),
       ),
-      floatingActionButton:
-      FloatingActionButton(
-          onPressed: _showAddMagicWordDialog,
-          child: const Icon(Icons.add)),
+      floatingActionButton: FloatingActionButton(
+          onPressed: _showAddMagicWordDialog, child: const Icon(Icons.add)),
     );
   }
 }
