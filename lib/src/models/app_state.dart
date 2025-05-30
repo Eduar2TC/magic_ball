@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:magic_ball/src/utils/data_configurations.dart';
 import 'package:magic_ball/src/utils/shared_preferences.dart';
-
 class AppState extends ChangeNotifier {
   late DataConfigurations? _dataConfigurations;
   late List<String>? _magicList;
@@ -13,17 +12,18 @@ class AppState extends ChangeNotifier {
     _initializeSharedPreferencesUtils();
   }
   Future<void> _initializeSharedPreferencesUtils() async {
-    try{
+    try {
       _dataConfigurations = null;
       _magicList = null;
       _sharedPreferencesUtils = SharedPreferencesUtils();
-      await _sharedPreferencesUtils.initializeSharedPreferences();  //load before data
+      await _sharedPreferencesUtils.initializeSharedPreferences(); // Load before the data
       await _loadData();
-    }catch(e){
+    } catch (e) {
       log('Error initializing shared preferences utils: $e');
     }
   }
-  //Setters and Getters
+
+  // Setters and gettes
   DataConfigurations? get dataConfigurations => _dataConfigurations;
   List<String>? get magicList => _magicList;
   SharedPreferencesUtils get sharedPreferencesUtils => _sharedPreferencesUtils;
@@ -31,6 +31,7 @@ class AppState extends ChangeNotifier {
     _dataConfigurations = dataConfigurations;
     notifyListeners();
   }
+
   set magicList(List<String>? magicList) {
     _magicList = magicList;
     notifyListeners();
@@ -38,49 +39,60 @@ class AppState extends ChangeNotifier {
 
   Future<void> _loadData() async {
     await _sharedPreferencesUtils.getMagicListFromSharedPreferences();
-    try{
+    try {
       _dataConfigurations = await _sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
-    } catch(e){
+    } catch (e) {
       log('Error loading data configurations: $e');
     }
-    try{
+    try {
       _magicList = await _sharedPreferencesUtils.getMagicListFromSharedPreferences();
-    } catch(e){
+    } catch (e) {
       log('Error loading magic list: $e');
     }
     notifyListeners();
   }
 
   Future<void> getMagicList() async {
-    try{
+    try {
       _magicList = await _sharedPreferencesUtils.getMagicListFromSharedPreferences();
-    } catch(e){
+    } catch (e) {
       log('Error loading magic list: $e');
     }
     notifyListeners();
   }
 
   void updateDataConfigurations(DataConfigurations dataConfigurations) {
-   try{
-     _dataConfigurations = dataConfigurations;
-     _sharedPreferencesUtils.saveDataConfigurationsFromSharedPreferences(dataConfigurations);
-   }catch(e){
+    try {
+      _dataConfigurations = dataConfigurations;
+      _sharedPreferencesUtils.saveDataConfigurationsFromSharedPreferences(dataConfigurations);
+    } catch (e) {
       log('Error updating data configurations: $e');
-   }
+    }
     notifyListeners();
   }
 
-  void updateMagicList(String magicWord) {
+  void addMagicWord(String magicWord) {
     try {
-      final index = _searchWordAndReturnIndexInMagicList(magicWord);
-      if (index == -1) {
-        _magicList?.add(magicWord.toUpperCase()); //Add
-      } else {
-        _magicList?[index] = magicWord.toUpperCase(); //Update
-      }
-      _sharedPreferencesUtils.saveMagicListToSharedPreferences(_magicList!); //Save
+      final updatedList = List<String>.from(_magicList ?? []);
+      updatedList.add(magicWord.toUpperCase());
+      _magicList = updatedList;
+      _sharedPreferencesUtils.saveMagicListToSharedPreferences(_magicList!);
     } catch (e) {
-      log('Error updating magic list: $e');
+      log('Error adding magic word: $e');
+    }
+    notifyListeners();
+  }
+
+  void editMagicWord(int index, String newWord) {
+    try {
+      if (_magicList != null && index >= 0 && index < _magicList!.length) {
+        _magicList![index] = newWord.toUpperCase();
+        _sharedPreferencesUtils.saveMagicListToSharedPreferences(_magicList!);
+      } else {
+        log('Error: Invalid index or magic list is null while editing.');
+      }
+    } catch (e) {
+      log('Error editing magic word: $e');
     }
     notifyListeners();
   }

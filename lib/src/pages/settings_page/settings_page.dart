@@ -27,11 +27,7 @@ class SettingsState extends State<Settings> {
   int? previousValue;
 
   int getOption() {
-    return dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys
-        .elementAt(0)]['appbarTitle']['settings'] ==
-        'Ajustes'
-        ? 2
-        : 1;
+    return dataConfigurations?.langStrings[dataConfigurations?.langStrings.keys.elementAt(0)]['appbarTitle']['settings'] == 'Ajustes' ? 2 : 1;
   }
 
   @override
@@ -108,132 +104,133 @@ class SettingsState extends State<Settings> {
               ),
             ),
             child: Center(
-              child: Container(
-                width: width * 0.8,
-                height: width * 0.8,
-                decoration: BoxDecoration(
-                  color: Colors.white12,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        ValueListenableBuilder<Map?>(
-                          valueListenable: dataConfigurationsNotifier,
-                          builder: (context, dataLanguage, child) {
-                            return Text(
-                              dataLanguage?['dropDownOptionTitle'] ?? '',
+              child: LayoutBuilder(builder: (context, constraints) {
+                final containerWidth = constraints.maxWidth;
+                final containerHeight = constraints.maxHeight;
+                return Container(
+                  width: containerWidth * 0.8,
+                  height: containerWidth * 0.8,
+                  decoration: BoxDecoration(
+                    color: Colors.white12,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ValueListenableBuilder<Map?>(
+                            valueListenable: dataConfigurationsNotifier,
+                            builder: (context, dataLanguage, child) {
+                              return Text(
+                                dataLanguage?['dropDownOptionTitle'] ?? '',
+                                style: GoogleFonts.roboto(
+                                  color: Colors.white,
+                                  fontStyle: FontStyle.normal,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize:  containerWidth * 0.05,
+                                ),
+                              );
+                            },
+                          ),
+                          DropdownButtonHideUnderline(
+                            child: DropdownButton(
+                              value: getOption(),
+                              dropdownColor: const Color(0xff28237d),
                               style: GoogleFonts.roboto(
                                 color: Colors.white,
                                 fontStyle: FontStyle.normal,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 20,
+                                fontSize:  containerWidth * 0.05,
                               ),
-                            );
-                          },
-                        ),
-                        DropdownButtonHideUnderline(
-                          child: DropdownButton(
-                            value: getOption(),
-                            dropdownColor: const Color(0xff28237d),
+                              items: [
+                                DropdownMenuItem(
+                                  value: 1,
+                                  child: ValueListenableBuilder<Map?>(
+                                    valueListenable: dataConfigurationsNotifier,
+                                    builder: (context, dataLanguage, _) {
+                                      return Text(
+                                        dataLanguage?['dropDownOptionEnglish'] ?? '',
+                                      );
+                                    },
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 2,
+                                  child: ValueListenableBuilder<Map?>(
+                                    valueListenable: dataConfigurationsNotifier,
+                                    builder: (context, dataLanguage, _) {
+                                      return Text(
+                                        dataLanguage?['dropDownOptionSpanish'] ?? '',
+                                      );
+                                    },
+                                  ),
+                                )
+                              ],
+                              onChanged: (int? value) {
+                                if (value != previousValue) {
+                                  swapLanguageStrings();
+                                }
+                                previousValue = value;
+                              },
+                              iconSize:  containerWidth * 0.05,
+                              iconEnabledColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Magic List',
                             style: GoogleFonts.roboto(
                               color: Colors.white,
                               fontStyle: FontStyle.normal,
                               fontWeight: FontWeight.bold,
-                              fontSize: 30,
+                              fontSize:  containerWidth * 0.05,
                             ),
-                            items: [
-                              DropdownMenuItem(
-                                value: 1,
-                                child: ValueListenableBuilder<Map?>(
-                                  valueListenable: dataConfigurationsNotifier,
-                                  builder: (context, dataLanguage, _) {
-                                    return Text(
-                                      dataLanguage?[
-                                      'dropDownOptionEnglish'] ??
-                                          '',
-                                    );
-                                  },
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 2,
-                                child: ValueListenableBuilder<Map?>(
-                                  valueListenable: dataConfigurationsNotifier,
-                                  builder: (context, dataLanguage, _) {
-                                    return Text(
-                                      dataLanguage?[
-                                      'dropDownOptionSpanish'] ??
-                                          '',
-                                    );
-                                  },
-                                ),
-                              )
-                            ],
-                            onChanged: (int? value) {
-                              if (value != previousValue) {
-                                swapLanguageStrings();
-                              }
-                              previousValue = value;
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/magic_list_settings');
                             },
-                            iconSize: 50,
-                            iconEnabledColor: Colors.white,
+                            icon: Icon(Icons.edit, color: Colors.white, size:  containerWidth * 0.08),
                           ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Magic List',
-                          style: GoogleFonts.roboto(
-                            color: Colors.white,
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: (){
-                            Navigator.pushNamed(context, '/magic_list_settings');
-                          },
-                          icon: Icon(
-                              Icons.edit,
+                        ],
+                      ),
+                      //Switch Shake to get answer
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Shake to get answer',
+                            style: GoogleFonts.roboto(
                               color: Colors.white,
-                              size:  width*0.08
-                          ),
-                        ),
-                      ],
-                    ),
-                    //Switch Shake to get answer
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Shake to get answer',
-                          style: GoogleFonts.roboto(
-                            color: Colors.white,
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                        Switch(
-                          value: true,
-                          onChanged: (bool value) {},
-                          activeColor: Colors.white,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+                              fontStyle: FontStyle.normal,
+                              fontWeight: FontWeight.bold,
+                              fontSize:  containerWidth * 0.05,
+                            ),
+                          ),SizedBox(
+                            width: containerWidth * 0.09,
+                            child: FittedBox(
+                              fit: BoxFit.fill,
+                              child: Switch(
+                                value: true,
+                                onChanged: (bool value) {},
+                                activeColor: Colors.white,
+                              ),
+                            ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ),
           ),
         ),

@@ -92,14 +92,10 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
           backgroundColor: dataConfigurations?.backgroundColor,
           appBar: AppBar(
             title: Text(
-              dataConfigurations != null && dataConfigurations.langStrings.isNotEmpty &&
-                      dataConfigurations.langStrings.keys.isNotEmpty
-                  ? dataConfigurations.langStrings[dataConfigurations
-                          .langStrings.keys.first]['appbarTitle']['home'] ?? ''
-                  : '',
+              dataConfigurations != null && dataConfigurations.langStrings.isNotEmpty && dataConfigurations.langStrings.keys.isNotEmpty ? dataConfigurations.langStrings[dataConfigurations.langStrings.keys.first]['appbarTitle']['home'] ?? '' : '',
               style: TextStyle(color: dataConfigurations?.titleAppBarColor),
             ),
-            backgroundColor:dataConfigurations?.appBarColor ?? const Color(0xff10024f),
+            backgroundColor: dataConfigurations?.appBarColor ?? const Color(0xff10024f),
             centerTitle: true,
             actions: [
               IconButton(
@@ -147,17 +143,12 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
           ballAnimations.answerAnimationController.forward();
           isOnPressedNotifier.value = false;
           //show bubbles
-          ballAnimations.ballAnimation.isAnimating
-              ? showShakeBubblesNotifier.value = true
-              : showShakeBubblesNotifier.value = false;
-          ballAnimations.ballAnimation.isAnimating
-              ? showBubbleEffectNotifier.value = false
-              : showBubbleEffectNotifier.value = true;
+          ballAnimations.ballAnimation.isAnimating ? showShakeBubblesNotifier.value = true : showShakeBubblesNotifier.value = false;
+          ballAnimations.ballAnimation.isAnimating ? showBubbleEffectNotifier.value = false : showBubbleEffectNotifier.value = true;
         }).then((_) {
           //Hide magic response
           Future.delayed(const Duration(milliseconds: 3000), () {
             ballAnimations.answerAnimationController.reverse();
-
           });
         });
       });
@@ -249,11 +240,15 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
                     // 3D rotation effect
                     transform: Matrix4.identity()
                       ..setEntry(3, 2, 0.001)
-                      ..translate(0.0,-100.0 * (1 - ballAnimations.answerAnimation.value),0.0,)
-                      ..setRotationZ( alternateRotationDirection ? randomZAngle * ballAnimations.answerAnimation.value
-                            : -randomZAngle * ballAnimations.answerAnimation.value,
+                      ..translate(
+                        0.0,
+                        -100.0 * (1 - ballAnimations.answerAnimation.value),
+                        0.0,
                       )
-                      ..scale( 1.5 - math.cos(ballAnimations.answerAnimation.value *math.pi *0.3) * 1.0) //animation 1
+                      ..setRotationZ(
+                        alternateRotationDirection ? randomZAngle * ballAnimations.answerAnimation.value : -randomZAngle * ballAnimations.answerAnimation.value,
+                      )
+                      ..scale(1.5 - math.cos(ballAnimations.answerAnimation.value * math.pi * 0.3) * 1.0) //animation 1
                     //..scale(math.cos( 0.3 * ballAnimations.answerAnimation.value)) //animation 2
                     //..rotateX(randomZAngle * ballAnimations.answerAnimation.value) //animation 3
                     ,

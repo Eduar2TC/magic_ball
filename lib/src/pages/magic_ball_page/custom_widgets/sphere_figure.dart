@@ -24,7 +24,9 @@ class SphereFigure extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5,),
+            color: Colors.black.withValues(
+              alpha: 0.5,
+            ),
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -46,21 +48,20 @@ class SphereFigure extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Colors.black.withValues(alpha:0.6),
-                    Colors.black.withValues(alpha:0.8),
-                    Colors.black.withValues(alpha:0.9),
-
+                    Colors.black.withValues(alpha: 0.6),
+                    Colors.black.withValues(alpha: 0.8),
+                    Colors.black.withValues(alpha: 0.9),
                   ],
                   stops: const [0.7, 0.8, 1.0],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha:0.8),
+                    color: Colors.black.withValues(alpha: 0.8),
                     blurRadius: 15,
                     spreadRadius: 1,
                   ),
                   BoxShadow(
-                    color: Colors.white.withValues(alpha:0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     blurRadius: 15,
                     spreadRadius: -5,
                     offset: const Offset(0, -5),
@@ -86,8 +87,8 @@ class LightEffectPainter extends CustomPainter {
       center: const Alignment(0, -0.5),
       radius: 1.0,
       colors: [
-        Colors.white.withValues(alpha:0.7),
-        Colors.white.withValues(alpha:0.3),
+        Colors.white.withValues(alpha: 0.7),
+        Colors.white.withValues(alpha: 0.3),
         Colors.transparent,
       ],
       stops: const [0.0, 0.3, 0.6],
@@ -154,8 +155,8 @@ class BorderEffectPainter extends CustomPainter {
     final innerShadowPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          Colors.deepPurpleAccent.withValues(alpha:0.5),
-          Colors.transparent, //CHANGE COLOR IN NEGATIVE ANSWER
+          Colors.deepPurpleAccent.withValues(alpha: 0.5),
+          Colors.transparent, //TODO: CHANGE COLOR IN NEGATIVE ANSWER
         ],
         stops: const [0.9, 3.0],
       ).createShader(rect)
