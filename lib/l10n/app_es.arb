@@ -1,0 +1,59 @@
+{
+  "@@locale": "es",
+  "appbarTitle_home": "Pregunta lo que sea",
+  "appbarTitle_settings": "Ajustes",
+  "dropDownOptionTitle": "Idioma",
+  "dropDownOptionEnglish": "Inglés",
+  "dropDownOptionSpanish": "Español",
+  "dropDownOptionPortuguese": "Portugués",
+  "magicList_empty": "Vacío",
+  "addMagicWord": "Agregar palabra mágica",
+  "editMagicWord": "Editar palabra mágica",
+  "enterMagicWord": "Escribe una palabra mágica",
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "shakeToGetAnswer": "Agitar para obtener respuesta",
+  "magicList": "Lista mágica",
+  "undo": "Deshacer",
+  "magicWordAdded": "Palabra mágica agregada",
+  "magicWordUpdated": "Palabra mágica actualizada",
+  "magicWordRemoved": "Palabra mágica eliminada",
+  "welcomeMessage": "¡Bienvenido a la aplicación Bola Mágica!",
+  "askQuestion": "Haz una pregunta y agita la bola.",
+  "settings": "Configuraciones",
+  "about": "Acerca de",
+  "exit": "Salir",
+  "@magicList_empty": {
+    "description": "Mensaje mostrado cuando la lista mágica está vacía"
+  },
+  "@addMagicWord": {
+    "description": "Texto para el botón de agregar palabra mágica"
+  },
+  "@editMagicWord": {
+    "description": "Texto para el botón de editar palabra mágica"
+  },
+  "@enterMagicWord": {
+    "description": "Campo para escribir una palabra mágica"
+  },
+  "@shakeToGetAnswer": {
+    "description": "Texto para la opción de agitar para obtener respuesta"
+  },
+  "@welcomeMessage": {
+    "description": "Mensaje de bienvenida mostrado en la pantalla inicial"
+  },
+  "@askQuestion": {
+    "description": "Texto que instruye al usuario a hacer una pregunta"
+  },
+  "@settings": {
+    "description": "Texto para el botón de configuraciones"
+  },
+  "@about": {
+    "description": "Texto para el botón acerca de"
+  },
+  "@exit": {
+    "description": "Texto para el botón de salir"
+  },
+  "@dropDownOptionPortuguese": {
+    "description": "Opción para seleccionar el idioma portugués"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "@@locale": "en",
+  "appbarTitle_home": "Ask anything",
+  "@appbarTitle_home": {
+    "description": "Title for the home screen app bar"
+  },
+  "appbarTitle_settings": "Settings",
+  "@appbarTitle_settings": {
+    "description": "Title for the settings screen app bar"
+  },
+  "dropDownOptionTitle": "Language",
+  "@dropDownOptionTitle": {
+    "description": "Dropdown title for selecting language"
+  },
+  "dropDownOptionEnglish": "English",
+  "@dropDownOptionEnglish": {
+    "description": "Option for English language"
+  },
+  "dropDownOptionSpanish": "Spanish",
+  "@dropDownOptionSpanish": {
+    "description": "Option for Spanish language"
+  },
+  "magicList_empty": "Empty",
+  "@magicList_empty": {
+    "description": "Message displayed when the magic list is empty"
+  },
+  "addMagicWord": "Add Magic Word",
+  "@addMagicWord": {
+    "description": "Button text for adding a magic word"
+  },
+  "editMagicWord": "Edit Magic Word",
+  "@editMagicWord": {
+    "description": "Button text for editing a magic word"
+  },
+  "enterMagicWord": "Enter a magic word",
+  "@enterMagicWord": {
+    "description": "Placeholder text for entering a magic word"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Button text for canceling an action"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Button text for saving changes"
+  },
+  "shakeToGetAnswer": "Shake to get answer",
+  "@shakeToGetAnswer": {
+    "description": "Instruction to shake the device to get an answer"
+  },
+  "magicList": "Magic List",
+  "@magicList": {
+    "description": "Title for the magic list screen"
+  },
+  "undo": "Undo",
+  "@undo": {
+    "description": "Button text for undoing an action"
+  },
+  "magicWordAdded": "Magic word added",
+  "@magicWordAdded": {
+    "description": "Message displayed when a magic word is added"
+  },
+  "magicWordUpdated": "Magic word updated",
+  "@magicWordUpdated": {
+    "description": "Message displayed when a magic word is updated"
+  },
+  "magicWordRemoved": "Magic word removed",
+  "@magicWordRemoved": {
+    "description": "Message displayed when a magic word is removed"
+  }
+}

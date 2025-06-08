@@ -7,11 +7,6 @@ import 'package:magic_ball/src/routes/routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  /*final sharedPreferencesUtils = SharedPreferencesUtils();
-  InitializationService(sharedPreferencesUtils);
-  await InitializationService(sharedPreferencesUtils).initializeDataConfigurations();
-  await InitializationService(sharedPreferencesUtils).initializeMagicList();*/
-
   runApp(
     ChangeNotifierProvider(
       create: (context) => AppState(),

@@ -1,0 +1,16 @@
+{
+  "appbarTitle": {
+    "home": "Pregunta lo que sea",
+    "settings": "Ajustes"
+  },
+  "dropDownOptionTitle": "Idioma",
+  "dropDownOptionEnglish": "Inglés",
+  "dropDownOptionSpanish": "Español",
+  "magicWords": [
+    "SI",
+    "NO",
+    "PREGUNTA\nMÁS\nTARDE",
+    "LA RESPUESTA ES\nSI",
+    "NO TENGO IDEA"
+  ]
+}

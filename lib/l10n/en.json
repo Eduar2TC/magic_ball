@@ -1,0 +1,16 @@
+{
+  "appbarTitle": {
+    "home": "Ask anything",
+    "settings": "Settings"
+  },
+  "dropDownOptionTitle": "Language",
+  "dropDownOptionEnglish": "English",
+  "dropDownOptionSpanish": "Spanish",
+  "magicWords": [
+    "YES",
+    "NO",
+    "ASK AGAIN LATER",
+    "THE ANSWER IS YES",
+    "I HAVE NO IDEA"
+  ]
+}

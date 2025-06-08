@@ -23,7 +23,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // Setters and gettes
+  // getters and setters
   DataConfigurations? get dataConfigurations => _dataConfigurations;
   List<String>? get magicList => _magicList;
   SharedPreferencesUtils get sharedPreferencesUtils => _sharedPreferencesUtils;

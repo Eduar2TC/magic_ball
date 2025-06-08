@@ -97,6 +97,24 @@ class InitializationService {
               'NO TENGO IDEA',
             ],
           }
+        },
+        'portuguese': {
+          'appbarTitle': {
+            'home': 'Pergunte o que quiser',
+            'settings': 'Configurações',
+          },
+          'dropDownOptionTitle': 'Idioma',
+          'dropDownOptionEnglish': 'Inglês',
+          'dropDownOptionSpanish': 'Espanhol',
+          'translate': {
+            'list': [
+              'SIM',
+              'NÃO',
+              '\t\t\PREGUNTA\n\t\t\t\t\tMAIS\n\t\t\t\tTARDE',
+              'A RESPOSTA É\n' + '\t\t\t\t\t\t\t\t\t\t\t\t' + 'SIM',
+              'NÃO FAÇO IDEIA',
+            ],
+          }
         }
       },
     );

@@ -1,0 +1,99 @@
+{
+  "@@locale": "pt",
+  "appTitle": "Bola Mágica",
+  "welcomeMessage": "Bem-vindo ao aplicativo Bola Mágica!",
+  "askQuestion": "Faça uma pergunta e agite a bola.",
+  "settings": "Configurações",
+  "language": "Idioma",
+  "about": "Sobre",
+  "exit": "Sair",
+  "appbarTitle_home": "Pergunte qualquer coisa",
+  "appbarTitle_settings": "Configurações",
+  "dropDownOptionTitle": "Idioma",
+  "dropDownOptionEnglish": "Inglês",
+  "dropDownOptionSpanish": "Espanhol",
+  "magicList_empty": "Vazio",
+  "addMagicWord": "Adicionar Palavra Mágica",
+  "editMagicWord": "Editar Palavra Mágica",
+  "enterMagicWord": "Digite uma palavra mágica",
+  "cancel": "Cancelar",
+  "save": "Salvar",
+  "shakeToGetAnswer": "Agite para obter resposta",
+  "magicList": "Lista Mágica",
+  "undo": "Desfazer",
+  "magicWordAdded": "Palavra mágica adicionada",
+  "magicWordUpdated": "Palavra mágica atualizada",
+  "magicWordRemoved": "Palavra mágica removida",
+  "@appTitle": {
+    "description": "Título do aplicativo"
+  },
+  "@welcomeMessage": {
+    "description": "Mensagem de boas-vindas exibida na tela inicial"
+  },
+  "@askQuestion": {
+    "description": "Texto que instrui o usuário a fazer uma pergunta"
+  },
+  "@settings": {
+    "description": "Texto para o botão de configurações"
+  },
+  "@language": {
+    "description": "Texto para a opção de idioma"
+  },
+  "@about": {
+    "description": "Texto para o botão sobre"
+  },
+  "@exit": {
+    "description": "Texto para o botão de sair"
+  },
+  "@appbarTitle_home": {
+    "description": "Título da barra de aplicativos na página inicial"
+  },
+  "@appbarTitle_settings": {
+    "description": "Título da barra de aplicativos na página de configurações"
+  },
+  "@dropDownOptionTitle": {
+    "description": "Título da opção de menu suspenso para idioma"
+  },
+  "@dropDownOptionEnglish": {
+    "description": "Texto para a opção de idioma inglês"
+  },
+  "@dropDownOptionSpanish": {
+    "description": "Texto para a opção de idioma espanhol"
+  },
+  "@magicList_empty": {
+    "description": "Mensagem exibida quando a lista mágica está vazia"
+  },
+  "@addMagicWord": {
+    "description": "Texto para o botão de adicionar palavra mágica"
+  },
+  "@editMagicWord": {
+    "description": "Texto para o botão de editar palavra mágica"
+  },
+  "@enterMagicWord": {
+    "description": "Campo para digitar uma palavra mágica"
+  },
+  "@cancel": {
+    "description": "Texto para o botão de cancelar"
+  },
+  "@save": {
+    "description": "Texto para o botão de salvar"
+  },
+  "@shakeToGetAnswer": {
+    "description": "Texto para a opção de agitar para obter resposta"
+  },
+  "@magicList": {
+    "description": "Título da lista mágica"
+  },
+  "@undo": {
+    "description": "Texto para o botão de desfazer"
+  },
+  "@magicWordAdded": {
+    "description": "Mensagem exibida quando uma palavra mágica é adicionada"
+  },
+  "@magicWordUpdated": {
+    "description": "Mensagem exibida quando uma palavra mágica é atualizada"
+  },
+  "@magicWordRemoved": {
+    "description": "Mensagem exibida quando uma palavra mágica é removida"
+  }
+}
