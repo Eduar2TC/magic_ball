@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:magic_ball/src/models/app_state.dart';
 import 'package:magic_ball/src/pages/magic_ball_page/custom_widgets/animations.dart';
 import 'package:magic_ball/src/services/initialization_local_data_service.dart';
+import 'package:magic_ball/src/utils/lang_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:magic_ball/src/utils/audio.dart';
 
@@ -67,7 +68,12 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
 
   @override
   Widget build(BuildContext context) {
-    final dataConfigurations = Provider.of<AppState>(context).dataConfigurations;
+    final appState = Provider.of<AppState>(context);
+    final dataConfigurations = appState.dataConfigurations;
+    final currentLang = appState.currentLanguage;
+    final langStrings = dataConfigurations?.langStrings;
+    final appBarTitle = getLang(langStrings, currentLang, ['appbarTitle', 'home']) ?? 'Ask anything';
+
     return FutureBuilder(
       future: _iniDataFuture,
       builder: (context, snapshot) {
@@ -92,7 +98,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
           backgroundColor: dataConfigurations?.backgroundColor,
           appBar: AppBar(
             title: Text(
-              dataConfigurations != null && dataConfigurations.langStrings.isNotEmpty && dataConfigurations.langStrings.keys.isNotEmpty ? dataConfigurations.langStrings[dataConfigurations.langStrings.keys.first]['appbarTitle']['home'] ?? '' : '',
+              appBarTitle,
               style: TextStyle(color: dataConfigurations?.titleAppBarColor),
             ),
             backgroundColor: dataConfigurations?.appBarColor ?? const Color(0xff10024f),
@@ -361,6 +367,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
 
   Future<void> _initDataService() async {
     final appState = Provider.of<AppState>(context, listen: false);
-    InitializationService(appState.sharedPreferencesUtils);
+    final initService = InitializationService(appState.sharedPreferencesUtils);
+    await initService.initializeAll(appState.currentLanguage);
   }
 }

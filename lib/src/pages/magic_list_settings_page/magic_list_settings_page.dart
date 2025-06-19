@@ -37,13 +37,12 @@ class _MagicListSettingsState extends State<MagicListSettings> {
               _listKey.currentState?.insertItem(insertIndex);
 
               _showSnackBar(context, magicWord, 'Magic word added', () {
-                final index = appState.magicList?.indexOf(magicWord);
-                if (index != null && index >= 0) {
-                  final removed = appState.magicList!.removeAt(index);
-                  _listKey.currentState?.removeItem(
-                    index,
-                    (context, animation) => _buildAnimatedItem(removed, animation),
-                  );
+                if (insertIndex < (appState.magicList?.length ?? 0)) {
+                      final removed = appState.magicList!.removeAt(insertIndex);
+                      _listKey.currentState?.removeItem(
+                        insertIndex,
+                        (context, animation) => _buildAnimatedItem(removed, animation),
+                      );
                   appState.saveAllData();
                 }
               });

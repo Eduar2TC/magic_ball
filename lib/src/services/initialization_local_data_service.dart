@@ -6,54 +6,57 @@ import 'package:magic_ball/src/utils/shared_preferences.dart';
 class InitializationService {
   late final SharedPreferencesUtils sharedPreferencesUtils;
 
-  InitializationService(this.sharedPreferencesUtils)  {
-    _initializeAll();
-  }
+  InitializationService(this.sharedPreferencesUtils);
 
-  Future<void> _initializeAll() async {
+  /// Inicializa todas las configuraciones y listas mágicas para el idioma dado.
+  Future<void> initializeAll(String languageCode) async {
     await initializeDataConfigurations();
-    await initializeMagicList();
+    await initializeMagicList(languageCode);
   }
 
-  /// Initializes the data configurations. If not present, it saves the default configurations.
+  /// Inicializa la configuración de datos. Si no existe, guarda la configuración por defecto.
   Future<DataConfigurations> initializeDataConfigurations() async {
-    //await sharedPreferencesUtils.initializeSharedPreferences();
-    try{
+    try {
       DataConfigurations? dataConfigurations = await sharedPreferencesUtils.getDataConfigurationsFromSharedPreferences();
       if (dataConfigurations == null) {
-        debugPrint('Error saving data configurations to shared preferences $dataConfigurations');
-        try{
-          dataConfigurations = _getDefaultDataConfigurations();
-          await sharedPreferencesUtils.saveDataConfigurationsFromSharedPreferences(dataConfigurations);
-        }catch(e){
-          return _getDefaultDataConfigurations();
-        }
+        dataConfigurations = _getDefaultDataConfigurations();
+        await sharedPreferencesUtils.saveDataConfigurationsFromSharedPreferences(dataConfigurations);
       }
-      debugPrint('Error INIT: $dataConfigurations');
       return dataConfigurations;
-    } catch(e){
+    } catch (e) {
       debugPrint('Error initializing data configurations: $e');
       return _getDefaultDataConfigurations();
     }
-
   }
 
-  /// Initializes the magic list. If not present, it saves an empty list.
-  Future<List<String>?> initializeMagicList() async {
-    try{
-      List<String>? magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+  /// Inicializa la Magic List para el idioma dado. Si no existe, usa la lista por defecto y la guarda.
+  Future<List<String>?> initializeMagicList(String languageCode) async {
+    try {
+      List<String>? magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences(languageCode);
       if (magicList == null) {
-         sharedPreferencesUtils.saveMagicListToSharedPreferences(english); //TODO : refactor logic resposibilities with shared preferences
-         magicList = await sharedPreferencesUtils.getMagicListFromSharedPreferences();
+        List<String> defaultList;
+        switch (languageCode) {
+          case 'es':
+            defaultList = spanish;
+            break;
+          case 'pt':
+            defaultList = portuguese;
+            break;
+          case 'en':
+          default:
+            defaultList = english;
+        }
+        await sharedPreferencesUtils.saveMagicListToSharedPreferences(defaultList, languageCode);
+        magicList = defaultList;
       }
       return magicList;
-    } catch(e){
-      debugPrint('Error initializing magic list: $e');
+    } catch (e) {
+      debugPrint('Error initializing magic list for $languageCode: $e');
       return null;
     }
   }
 
-  /// Returns the default data configurations.
+  /// Devuelve la configuración de datos por defecto.
   DataConfigurations _getDefaultDataConfigurations() {
     return DataConfigurations(
       backgroundColor: Colors.blue[300]!,
@@ -67,17 +70,14 @@ class InitializationService {
             'home': 'Ask anything',
             'settings': 'Settings',
           },
+          'magicListTitle': 'Magic List',
+          'shakeOptionTitle': 'Shake to get answer',
           'dropDownOptionTitle': 'Language',
           'dropDownOptionEnglish': 'English',
           'dropDownOptionSpanish': 'Spanish',
+          'dropDownOptionPortuguese': 'Portuguese',
           'translate': {
-            'list': [
-              'YES',
-              'NO',
-              '\t\tASK\nAGAIN\nLATER',
-              'THE ANSWER IS\n' + '\t\t\t\t\t\t\t\t\t\t' + 'YES',
-              'I HAVE NO IDEA',
-            ],
+            'list': english,
           }
         },
         'spanish': {
@@ -85,17 +85,14 @@ class InitializationService {
             'home': 'Pregunta lo que sea',
             'settings': 'Ajustes',
           },
+          'magicListTitle': 'Lista Mágica',
+          'shakeOptionTitle': 'Sacudir para funcionar',
           'dropDownOptionTitle': 'Idioma',
           'dropDownOptionEnglish': 'Inglés',
           'dropDownOptionSpanish': 'Español',
+          'dropDownOptionPortuguese': 'Portugués',
           'translate': {
-            'list': [
-              'SI',
-              'NO',
-              '\t\t\PREGUNTA\n\t\t\t\t\tMAS\n\t\t\t\tTARDE',
-              'LA RESPUESTA ES\n' + '\t\t\t\t\t\t\t\t\t\t\t\t' + 'SI',
-              'NO TENGO IDEA',
-            ],
+            'list': spanish,
           }
         },
         'portuguese': {
@@ -103,17 +100,14 @@ class InitializationService {
             'home': 'Pergunte o que quiser',
             'settings': 'Configurações',
           },
+          'magicListTitle': 'Lista de Magia',
+          'shakeOptionTitle': 'Agite para obter a resposta',
           'dropDownOptionTitle': 'Idioma',
           'dropDownOptionEnglish': 'Inglês',
           'dropDownOptionSpanish': 'Espanhol',
+          'dropDownOptionPortuguese': 'Português',
           'translate': {
-            'list': [
-              'SIM',
-              'NÃO',
-              '\t\t\PREGUNTA\n\t\t\t\t\tMAIS\n\t\t\t\tTARDE',
-              'A RESPOSTA É\n' + '\t\t\t\t\t\t\t\t\t\t\t\t' + 'SIM',
-              'NÃO FAÇO IDEIA',
-            ],
+            'list': portuguese,
           }
         }
       },

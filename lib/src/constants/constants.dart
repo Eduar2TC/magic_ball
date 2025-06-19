@@ -1,14 +1,22 @@
 final english = [
   'YES',
   'NO',
-  '\t\tASK\nAGAIN\nLATER',
-  'THE ANSWER IS\n' + '\t\t\t\t\t\t\t\t\t\t' + 'YES',
+  'ASK AGAIN LATER',
+  'THE ANSWER IS YES',
   'I HAVE NO IDEA',
 ];
 final spanish = [
   'SI',
   'NO',
-  '\t\t\PREGUNTA\n\t\t\t\t\tMAS\n\t\t\t\tTARDE',
-  'LA RESPUESTA ES\n' + '\t\t\t\t\t\t\t\t\t\t\t\t' + 'SI',
+  'PREGUNTA MAS TARDE',
+  'LA RESPUESTA ES SI',
   'NO TENGO IDEA',
+];
+final portuguese = [
+'SIM',
+'NÃO',
+'PERGUNTE MAIS TARDE',
+'A RESPOSTA É SIM',
+'NÃO FAÇO IDEIA',
+
 ];
