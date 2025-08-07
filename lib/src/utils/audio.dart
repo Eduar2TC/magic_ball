@@ -1,16 +1,22 @@
 import 'package:audioplayers/audioplayers.dart';
 
 class Audio {
+  static final Audio _instance = Audio._internal();
+
   late AudioPlayer audioPlayer;
   AssetSource? _shakeBall;
   AssetSource? _pop;
 
-  Audio() {
+  factory Audio() {
+    return _instance;
+  }
+
+  Audio._internal() {
     audioPlayer = AudioPlayer();
     initSources();
   }
 
-  initSources() {
+  void initSources() {
     audioPlayer.setPlayerMode(PlayerMode.mediaPlayer);
     audioPlayer.setVolume(1.0);
     _shakeBall = AssetSource('audio/ball/shake.mp3');

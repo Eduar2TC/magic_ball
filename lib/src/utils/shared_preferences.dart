@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'package:magic_ball/src/constants/constants.dart';
 import 'package:magic_ball/src/utils/data_configurations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 //Get data if it exist in shared preferences device , if not return predefined constant data

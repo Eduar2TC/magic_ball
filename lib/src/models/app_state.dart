@@ -9,7 +9,7 @@ class AppState extends ChangeNotifier {
   late DataConfigurations? _dataConfigurations;
   late List<String>? _magicList;
   late final SharedPreferencesUtils _sharedPreferencesUtils;
-  String _currentLanguage = 'en'; // Default
+  String _currentLanguage = 'en';
 
   AppState() {
     _initializeSharedPreferencesUtils();

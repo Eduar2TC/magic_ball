@@ -1,7 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
+import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:magic_ball/src/models/app_state.dart';
 import 'package:magic_ball/src/pages/magic_ball_page/custom_widgets/animations.dart';
+import 'package:magic_ball/src/pages/magic_ball_page/custom_widgets/liquid_tetrahedron.dart';
 import 'package:magic_ball/src/services/initialization_local_data_service.dart';
 import 'package:magic_ball/src/utils/lang_helper.dart';
 import 'package:provider/provider.dart';
@@ -10,9 +14,9 @@ import 'package:magic_ball/src/utils/audio.dart';
 import 'custom_widgets/bubble_effect.dart';
 import 'custom_widgets/sphere_figure.dart';
 import 'custom_widgets/shaking_bubble_effect.dart';
-import 'package:vector_math/vector_math_64.dart' show Quaternion, Vector3, Vector4;
-
 import 'custom_widgets/triangle.dart';
+
+import 'package:vector_math/vector_math_64.dart' as vmath;
 
 class MagicBallPage extends StatefulWidget {
   const MagicBallPage({super.key});
@@ -31,6 +35,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
   final ValueNotifier<String?> magicAnswerNotifier = ValueNotifier<String?>(null);
   final ValueNotifier<bool> showShakeBubblesNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> showBubbleEffectNotifier = ValueNotifier<bool>(false); //TODO: fix this functionallity
+  final ValueNotifier<bool> showLiquidTetrahedronNotifier = ValueNotifier<bool>(false);
   late Future<void> _iniDataFuture;
 
   @override
@@ -42,6 +47,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
     //showBubbleEffect with delayed
     Future.delayed(const Duration(milliseconds: 3500), () {
       showBubbleEffectNotifier.value = true;
+      showLiquidTetrahedronNotifier.value = true;
     });
     _iniDataFuture = _initDataService();
   }
@@ -54,6 +60,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
     magicAnswerNotifier.dispose();
     showShakeBubblesNotifier.dispose();
     showBubbleEffectNotifier.dispose();
+    showLiquidTetrahedronNotifier.dispose();
     super.dispose();
   }
 
@@ -138,6 +145,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
       isOnPressedNotifier.value = true;
       showShakeBubblesNotifier.value = true;
       showBubbleEffectNotifier.value = false;
+      showLiquidTetrahedronNotifier.value = false;
       audio.playShake();
 
       ballAnimations.ballAnimationController.forward().then((_) {
@@ -151,8 +159,9 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
           //show bubbles
           ballAnimations.ballAnimation.isAnimating ? showShakeBubblesNotifier.value = true : showShakeBubblesNotifier.value = false;
           ballAnimations.ballAnimation.isAnimating ? showBubbleEffectNotifier.value = false : showBubbleEffectNotifier.value = true;
+          showLiquidTetrahedronNotifier.value = true;
         }).then((_) {
-          //Hide magic response
+          //hide magic response
           Future.delayed(const Duration(milliseconds: 3000), () {
             ballAnimations.answerAnimationController.reverse();
           });
@@ -166,10 +175,11 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
       alignment: Alignment.center,
       children: [
         buildBallFigure(),
-        buildMagicAnswer(),
+        //buildMagicAnswer(),
         buildShadowAnimation(),
         buildShakingBubbleEffect(),
         buildBubbleEffect(),
+        buildLiquidTetrahedron(),
       ],
     );
   }
@@ -193,7 +203,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
                     bounce(ballAnimations.ballAnimation.value),
                     math.sin(ballAnimations.ballAnimation.value * 500) * 25,
                   ),
-                  child: SphereFigure(size: sphereWidth),
+                  child: SphereFigure(size: sphereWidth), //figure of the magic ball
                 );
               },
             ),
@@ -229,9 +239,7 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
           child: AnimatedBuilder(
             animation: ballAnimations.answerAnimation,
             builder: (context, _) {
-              double h = math.sqrt(3) / 2 * MediaQuery.of(context).size.width * 0.4;
-              double xOffset = (h / 3) * math.sin(randomZAngle);
-              double yOffset = (h / 3) * (1 - math.cos(randomZAngle));
+
               return Transform.translate(
                 offset: Offset(0, ballAnimations.answerAnimation.value),
                 child: AnimatedOpacity(
@@ -254,37 +262,12 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
                       ..setRotationZ(
                         alternateRotationDirection ? randomZAngle * ballAnimations.answerAnimation.value : -randomZAngle * ballAnimations.answerAnimation.value,
                       )
-                      ..scale(1.5 - math.cos(ballAnimations.answerAnimation.value * math.pi * 0.3) * 1.0) //animation 1
-                    //..scale(math.cos( 0.3 * ballAnimations.answerAnimation.value)) //animation 2
-                    //..rotateX(randomZAngle * ballAnimations.answerAnimation.value) //animation 3
+                      ..scale(1.5 - math.cos(ballAnimations.answerAnimation.value * math.pi * 0.3) * 1.0)
                     ,
                     child: MagicBallTriangle(
                       magicAnswer: magicAnswer ?? '',
                       size: MediaQuery.of(context).size.width * 0.4,
                     ),
-                    /*
-                    Text(
-                    magicAnswer ?? '',
-                    style: TextStyle(
-                      color: Colors.white30,
-                      fontStyle: FontStyle.normal,
-                      fontWeight: FontWeight.bold,
-                      fontSize: magicAnswerCounter(magicAnswer),
-                      shadows: const [
-                        Shadow(
-                          offset: Offset(3, 3),
-                          blurRadius: 3.0,
-                          color: Color.fromARGB(40, 35, 125, 0),
-                        ),
-                        Shadow(
-                          offset: Offset(5.0, 5.0),
-                          blurRadius: 8.0,
-                          color: Color.fromARGB(40, 35, 125, 255),
-                        ),
-                      ],
-                    ),
-                  ),
-                     */
                   ),
                 ),
               );
@@ -349,11 +332,39 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
       valueListenable: showBubbleEffectNotifier,
       builder: (context, showBubbleEffect, _) {
         return showBubbleEffect
-            ? BubbleEffect(
+            ? ClipOval(
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.4,
                 height: MediaQuery.of(context).size.width * 0.4,
-                numberOfBubbles: randomBubbles,
-              )
+                child: BubbleEffect(
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  height: MediaQuery.of(context).size.width * 0.4,
+                  numberOfBubbles: randomBubbles,
+                ),
+              ),
+            )
+            : Container();
+      },
+    );
+  }
+
+  Widget buildLiquidTetrahedron() {
+    return ValueListenableBuilder(
+      valueListenable: showLiquidTetrahedronNotifier,
+      builder: (context, isShowing, _) {
+        return isShowing
+            ? ClipOval(
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.4,
+                height: MediaQuery.of(context).size.width * 0.4,
+                child: LiquidTetrahedron(
+                    size: MediaQuery.of(context).size.width * 0.5,
+                    answer: magicAnswerNotifier.value ?? 'Tap to find out your fortune',
+                  ),
+              ),
+            )
             : Container();
       },
     );
@@ -369,5 +380,168 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
     final appState = Provider.of<AppState>(context, listen: false);
     final initService = InitializationService(appState.sharedPreferencesUtils);
     await initService.initializeAll(appState.currentLanguage);
+  }
+}
+class RealisticBubbleEffect extends StatefulWidget {
+  final double size;
+  final int maxBubbles;
+  const RealisticBubbleEffect({
+    super.key,
+    this.size = 300,
+    this.maxBubbles = 12,
+  });
+
+  @override
+  State<RealisticBubbleEffect> createState() => _RealisticBubbleEffectState();
+}
+
+class _RealisticBubbleEffectState extends State<RealisticBubbleEffect> with TickerProviderStateMixin {
+  final List<_BubbleModel> _bubbles = [];
+  bool _running = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleNextBubble();
+  }
+
+  void _scheduleNextBubble() {
+    if (!_running) return;
+    final delay = Duration(milliseconds: 300 + Random().nextInt(700));
+    Future.delayed(delay, () {
+      if (!_running) return;
+      if (_bubbles.length < widget.maxBubbles) {
+        setState(() {
+          _bubbles.add(_BubbleModel.random(widget.size, this, onRemove: () {
+            setState(() {});
+          }));
+        });
+      }
+      _scheduleNextBubble();
+    });
+  }
+
+  @override
+  void dispose() {
+    _running = false;
+    for (final b in _bubbles) {
+      b.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipOval(
+      child: Container(
+        width: widget.size,
+        height: widget.size,
+        child: Stack(
+          children: _bubbles.where((b) => !b.removed).map((b) => b.build()).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _BubbleModel {
+  final AnimationController controller;
+  final Animation<double> appearAnim;
+  final double startX, startY, endX, endY, size;
+  final double opacity;
+  bool removed = false;
+  final VoidCallback onRemove;
+
+  _BubbleModel._(
+    this.controller,
+    this.appearAnim,
+    this.startX,
+    this.startY,
+    this.endX,
+    this.endY,
+    this.size,
+    this.opacity,
+    this.onRemove,
+  );
+
+  factory _BubbleModel.random(double size, TickerProvider vsync, {required VoidCallback onRemove}) {
+    final random = Random();
+    final radius = size / 2;
+    final centerX = size / 2;
+    final centerY = size / 2;
+
+    final bubbleSize = random.nextDouble() * 18 + 8;
+    final angle = random.nextDouble() * 2 * pi;
+    final distance = random.nextDouble() * (radius - bubbleSize);
+
+    final startX = centerX + distance * cos(angle);
+    final startY = centerY + distance * sin(angle);
+
+    final endY = startY - (radius * 0.8);
+    final endX = startX + (random.nextDouble() - 0.5) * radius * 0.3;
+
+    final duration = Duration(milliseconds: 1200 + random.nextInt(1800));
+    final opacity = random.nextDouble() * 0.4 + 0.4;
+
+    final controller = AnimationController(
+      vsync: vsync,
+      duration: duration,
+    )..forward();
+
+    final appearAnim = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: controller, curve: const Interval(0.0, 0.2, curve: Curves.easeOut)),
+    );
+
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        onRemove();
+      }
+    });
+
+    return _BubbleModel._(
+      controller,
+      appearAnim,
+      startX,
+      startY,
+      endX,
+      endY,
+      bubbleSize,
+      opacity,
+      onRemove,
+    );
+  }
+
+  void dispose() => controller.dispose();
+
+  Widget build() {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final t = Curves.easeInOut.transform(controller.value);
+        final x = lerpDouble(startX, endX, t)!;
+        final y = lerpDouble(startY, endY, t)!;
+        final scale = appearAnim.value * (0.8 + 0.4 * (1 - t));
+        final bubbleOpacity = opacity * (1 - t) * appearAnim.value;
+        if (controller.isCompleted) removed = true;
+        return Positioned(
+          left: x,
+          top: y,
+          child: Opacity(
+            opacity: bubbleOpacity,
+            child: Transform.scale(
+              scale: scale,
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.7),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
