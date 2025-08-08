@@ -499,6 +499,36 @@ double calculateFontSizeRobust(String text, double width, double height, TextSty
   return bestSize;
 }
 
+/// Crea un path de triángulo con vértices redondeados
+Path roundedTriangle(List<Offset> points, double radius) {
+  assert(points.length == 3);
+  final path = Path();
+
+  for (int i = 0; i < 3; i++) {
+    final prev = points[(i + 2) % 3];
+    final curr = points[i];
+    final next = points[(i + 1) % 3];
+
+    final v1 = (prev - curr);
+    final v2 = (next - curr);
+
+    final v1Norm = v1 / v1.distance * radius;
+    final v2Norm = v2 / v2.distance * radius;
+
+    final p1 = curr + v1Norm;
+    final p2 = curr + v2Norm;
+
+    if (i == 0) {
+      path.moveTo(p1.dx, p1.dy);
+    } else {
+      path.lineTo(p1.dx, p1.dy);
+    }
+    path.quadraticBezierTo(curr.dx, curr.dy, p2.dx, p2.dy);
+  }
+  path.close();
+  return path;
+}
+
 
 class LiquidTetrahedronPainter extends CustomPainter {
   final vmath.Matrix4 matrix;
@@ -512,6 +542,36 @@ class LiquidTetrahedronPainter extends CustomPainter {
     required this.animationProgress,
     required this.floatProgress,
   });
+
+  /// Crea un path de triángulo con vértices redondeados
+  Path roundedTriangle(List<Offset> points, double radius) {
+    assert(points.length == 3);
+    final path = Path();
+
+    for (int i = 0; i < 3; i++) {
+      final prev = points[(i + 2) % 3];
+      final curr = points[i];
+      final next = points[(i + 1) % 3];
+
+      final v1 = (prev - curr);
+      final v2 = (next - curr);
+
+      final v1Norm = v1 / v1.distance * radius;
+      final v2Norm = v2 / v2.distance * radius;
+
+      final p1 = curr + v1Norm;
+      final p2 = curr + v2Norm;
+
+      if (i == 0) {
+        path.moveTo(p1.dx, p1.dy);
+      } else {
+        path.lineTo(p1.dx, p1.dy);
+      }
+      path.quadraticBezierTo(curr.dx, curr.dy, p2.dx, p2.dy);
+    }
+    path.close();
+    return path;
+  }
 
   final List<Color> colors = [
     Color(0xFF1565C0), // Cara frontal (azul más intenso)
@@ -554,11 +614,8 @@ class LiquidTetrahedronPainter extends CustomPainter {
         project(rotated[face[2]], size.width),
       ];
 
-      final path = Path()
-        ..moveTo(facePoints[0].dx, facePoints[0].dy)
-        ..lineTo(facePoints[1].dx, facePoints[1].dy)
-        ..lineTo(facePoints[2].dx, facePoints[2].dy)
-        ..close();
+      // Usar un radio proporcional al tamaño para las esquinas curvas
+      final path = roundedTriangle(facePoints, size.width * 0.06);
 
       // Efecto de ondulación del líquido en los colores
       final liquidEffect = 0.95 + 0.05 * math.sin(floatProgress * math.pi * 4);

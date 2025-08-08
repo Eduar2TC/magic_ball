@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
+import 'package:magic_ball/src/pages/magic_ball_page/magic_ball_page.dart';
+
 class SphereFigure extends StatelessWidget {
   final double size;
 
@@ -41,37 +43,53 @@ class SphereFigure extends StatelessWidget {
           ),
           // Círculo interno con borde realista y efecto de profundidad
           Center(
-            child: Container(
-              width: internalCircleSize, // Reducido de 0.65 a 0.55
-              height: internalCircleSize, // Reducido de 0.65 a 0.55
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    Colors.black.withValues(alpha: 0.6),
-                    Colors.black.withValues(alpha: 0.8),
-                    Colors.black.withValues(alpha: 0.9),
-                  ],
-                  stops: const [0.7, 0.8, 1.0],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.8),
-                    blurRadius: 15,
-                    spreadRadius: 1,
+            child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Fondo y borde
+                  Container(
+                    width: internalCircleSize,
+                    height: internalCircleSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.black.withValues(alpha: 0.6),
+                          Colors.black.withValues(alpha: 0.8),
+                          Colors.black.withValues(alpha: 0.9),
+                        ],
+                        stops: const [0.7, 0.8, 1.0],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.8),
+                          blurRadius: 15,
+                          spreadRadius: 1,
+                        ),
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          blurRadius: 15,
+                          spreadRadius: -5,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    child: CustomPaint(
+                      painter: BorderEffectPainter(),
+                    ),
                   ),
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    blurRadius: 15,
-                    spreadRadius: -5,
-                    offset: const Offset(0, -5),
+                  // Glow ring animado
+                  GlowingRingWidget(
+                    size: size,
+                    inner: 0.46, // Ajusta para que el anillo quede justo en el borde interno
+                    outer: 0.461,
+                    color1: Colors.green.withOpacity(0.8), // Personaliza el color
+                    color2: Colors.blue.withOpacity(0.6), // Personaliza el color animado
+                    innerColor: Colors.transparent, // ¡Ahora sí será transparente!
+                    edge: 0.0,
                   ),
                 ],
               ),
-              child: CustomPaint(
-                painter: BorderEffectPainter(),
-              ),
-            ),
           ),
         ],
       ),
