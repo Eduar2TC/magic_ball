@@ -5,8 +5,9 @@ import 'package:magic_ball/src/pages/magic_ball_page/magic_ball_page.dart';
 
 class SphereFigure extends StatelessWidget {
   final double size;
+  final Animation<double>? shakeAnimation;
 
-  const SphereFigure({super.key, this.size = 300});
+  const SphereFigure({super.key, this.size = 300, this.shakeAnimation});
 
   @override
   Widget build(BuildContext context) {
@@ -80,11 +81,11 @@ class SphereFigure extends StatelessWidget {
                   ),
                   // Glow ring animado
                   GlowingRingWidget(
-                    size: size,
-                    inner: 0.46, // Ajusta para que el anillo quede justo en el borde interno
-                    outer: 0.461,
-                    color1: Colors.green.withOpacity(0.8), // Personaliza el color
-                    color2: Colors.blue.withOpacity(0.6), // Personaliza el color animado
+                    size: internalCircleSize,
+                    inner: 0.88, // Ajusta para que el anillo quede justo en el borde interno
+                    outer: 0.95,
+                    color1: Colors.red.withOpacity(0.8), // Personaliza el color
+                    color2: Colors.deepPurple.withOpacity(0.6), // Personaliza el color animado
                     innerColor: Colors.transparent, // ¡Ahora sí será transparente!
                     edge: 0.0,
                   ),

@@ -546,6 +546,7 @@ class _BubbleModel {
     );
   }
 }
+
 class GlowingRingWidget extends StatefulWidget {
   final double size;
   final Duration duration;
@@ -559,7 +560,7 @@ class GlowingRingWidget extends StatefulWidget {
   const GlowingRingWidget({
     super.key,
     required this.size,
-    this.duration = const Duration(seconds: 10),
+    this.duration = const Duration(seconds: 4),
     this.inner = 0.48,
     this.outer = 0.5,
     this.color1 = const Color(0xFF4DE0FF),
@@ -572,12 +573,12 @@ class GlowingRingWidget extends StatefulWidget {
   State<GlowingRingWidget> createState() => _GlowingRingWidgetState();
 }
 
-class _GlowingRingWidgetState extends State<GlowingRingWidget>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+class _GlowingRingWidgetState extends State<GlowingRingWidget> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _controller;
   FragmentProgram? _program;
   Offset? widgetGlobalOffset;
   final GlobalKey _paintKey = GlobalKey();
+  bool _showRing = false;
 
   @override
   void initState() {
@@ -587,6 +588,10 @@ class _GlowingRingWidgetState extends State<GlowingRingWidget>
       ..addListener(_updateOffset)
       ..repeat();
     _loadShader();
+
+   Future.delayed(const Duration(milliseconds: 1200), () {
+     if (mounted) setState(() => _showRing = true);
+   });
   }
 
   @override
@@ -607,9 +612,11 @@ class _GlowingRingWidgetState extends State<GlowingRingWidget>
       if (box != null) {
         final offset = box.localToGlobal(Offset.zero);
         final pixelRatio = window.devicePixelRatio;
-        setState(() {
-          widgetGlobalOffset = offset * pixelRatio;
-        });
+        if (widgetGlobalOffset != offset * pixelRatio) {
+                setState(() {
+                  widgetGlobalOffset = offset * pixelRatio;
+                });
+        }
       }
     });
   }
@@ -624,7 +631,7 @@ class _GlowingRingWidgetState extends State<GlowingRingWidget>
 
   @override
   Widget build(BuildContext context) {
-    if (_program == null || widgetGlobalOffset == null) {
+    if (!_showRing || _program == null || widgetGlobalOffset == null) {
       return SizedBox(key: _paintKey, width: widget.size, height: widget.size);
     }
     return AnimatedBuilder(
