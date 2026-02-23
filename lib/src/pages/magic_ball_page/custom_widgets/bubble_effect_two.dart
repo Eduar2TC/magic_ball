@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 //More realistic bubbles moving from bottom to top
@@ -27,17 +28,19 @@ class BubbleEffectTwoState extends State<BubbleEffectTwo>
     super.initState();
     bubbles = List.generate(widget.numberOfBubbles,
         (index) => Bubble(width: widget.width, height: widget.height));
-    bubbles.forEach((bubble) {
+    for (var bubble in bubbles) {
       bubble.controller = AnimationController(
         duration: Duration(seconds: bubble.durationInSeconds),
         vsync: this,
       )..repeat();
-    });
+    }
   }
 
   @override
   void dispose() {
-    bubbles.forEach((bubble) => bubble.controller.dispose());
+    for (var bubble in bubbles) {
+      bubble.controller.dispose();
+    }
     super.dispose();
   }
 
@@ -77,7 +80,7 @@ class BubbleEffectTwoState extends State<BubbleEffectTwo>
               width: bubble.size,
               height: bubble.size,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 shape: BoxShape.circle,
               ),
             ),
