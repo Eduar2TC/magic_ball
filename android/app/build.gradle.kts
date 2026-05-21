@@ -9,7 +9,7 @@ android {
     namespace = "com.example.magic_ball"
     compileSdk = flutter.compileSdkVersion
     //ndkVersion = flutter.ndkVersion
-    ndkVersion = "27.0.12077973" // Specify the NDK version explicitly
+    ndkVersion = "28.2.13676358" // Specify the NDK version explicitly
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

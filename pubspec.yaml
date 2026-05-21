@@ -47,6 +47,7 @@ flutter:
   #         weight: 700
   shaders:
     - shaders/glow_ring.frag
+    - shaders/liquid_refract.frag
 analyzer:
   exclude:
     - build/**
