@@ -130,6 +130,12 @@ abstract class AppLocalizations {
   /// **'Spanish'**
   String get dropDownOptionSpanish;
 
+  /// Option for Portuguese language
+  ///
+  /// In en, this message translates to:
+  /// **'Portuguese'**
+  String get dropDownOptionPortuguese;
+
   /// Message displayed when the magic list is empty
   ///
   /// In en, this message translates to:
@@ -165,6 +171,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
+
+  /// Button text for adding
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
 
   /// Instruction to shake the device to get an answer
   ///

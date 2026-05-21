@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:magic_ball/src/models/app_state.dart';
-import 'package:magic_ball/src/utils/lang_helper.dart';
+import 'package:magic_ball/src/core/localizations/i18n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class Settings extends StatelessWidget {
@@ -13,15 +13,14 @@ class Settings extends StatelessWidget {
     final appState = Provider.of<AppState>(context);
     final dataConfigurations = appState.dataConfigurations;
     final currentLang = appState.currentLanguage;
-    final langStrings = dataConfigurations?.langStrings;
-    final width = MediaQuery.of(context).size.width;
-    final appBarTitle = getLang(langStrings, currentLang, ['appbarTitle', 'settings']) ?? 'Settings';
-    final dropDownOptionTitle = getLang(langStrings, currentLang, ['dropDownOptionTitle', 'settings']) ?? 'Languaje';
-    final dropDownOptionEnglish = getLang(langStrings, currentLang, ['dropDownOptionEnglish', 'settings']) ?? 'English';
-    final dropDownOptionSpanish = getLang(langStrings, currentLang, ['dropDownOptionSpanish', 'settings']) ?? 'Español';
-    final dropDownOptionPortuguese = getLang(langStrings, currentLang, ['dropDownOptionPortuguese', 'settings']) ?? 'Português';
-    final magicListTitle = getLang(langStrings, currentLang, ['magicListTitle']) ?? 'Magic List';
-    final shakeOptionTitle = getLang(langStrings, currentLang, ['shakeOptionTitle']) ?? 'Shake to get answer';
+    final l10n = AppLocalizations.of(context)!;
+    final appBarTitle = l10n.appbarTitle_settings;
+    final dropDownOptionTitle = l10n.dropDownOptionTitle;
+    final dropDownOptionEnglish = l10n.dropDownOptionEnglish;
+    final dropDownOptionSpanish = l10n.dropDownOptionSpanish;
+    final dropDownOptionPortuguese = l10n.dropDownOptionPortuguese;
+    final magicListTitle = l10n.magicList;
+    final shakeOptionTitle = l10n.shakeToGetAnswer;
 
     return Scaffold(
       backgroundColor: dataConfigurations?.backgroundColor,
@@ -58,7 +57,8 @@ class Settings extends StatelessWidget {
                   color: Colors.white12,
                   borderRadius: BorderRadius.circular(5),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -126,9 +126,11 @@ class Settings extends StatelessWidget {
                         ),
                         IconButton(
                           onPressed: () {
-                            Navigator.pushNamed(context, '/magic_list_settings');
+                            Navigator.pushNamed(
+                                context, '/magic_list_settings');
                           },
-                          icon: Icon(Icons.edit, color: Colors.white, size: containerWidth * 0.08),
+                          icon: Icon(Icons.edit,
+                              color: Colors.white, size: containerWidth * 0.08),
                         ),
                       ],
                     ),
@@ -152,7 +154,7 @@ class Settings extends StatelessWidget {
                             child: Switch(
                               value: true,
                               onChanged: (bool value) {},
-                              activeColor: Colors.white,
+                              activeThumbColor: Colors.white,
                             ),
                           ),
                         ),

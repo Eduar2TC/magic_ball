@@ -60,7 +60,7 @@ class _RealisticBubbleEffectState extends State<RealisticBubbleEffect> with Tick
   @override
   Widget build(BuildContext context) {
     return ClipOval(
-      child: Container(
+      child: SizedBox(
         width: widget.size,
         height: widget.size,
         child: Stack(

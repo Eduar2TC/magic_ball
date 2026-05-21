@@ -1,6 +1,6 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:magic_ball/src/models/app_state.dart';
+import 'package:magic_ball/src/core/localizations/i18n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class MagicListSettings extends StatefulWidget {
@@ -11,21 +11,25 @@ class MagicListSettings extends StatefulWidget {
 }
 
 class _MagicListSettingsState extends State<MagicListSettings> {
-  final GlobalKey<SliverAnimatedListState> _listKey = GlobalKey<SliverAnimatedListState>();
+  final GlobalKey<SliverAnimatedListState> _listKey =
+      GlobalKey<SliverAnimatedListState>();
 
   void _showAddMagicWordDialog() {
     final textEditingController = TextEditingController();
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Theme.of(context).primaryColor,
-        title: const Text('Add Magic Word'),
+        title: Text(l10n.addMagicWord),
         content: TextField(
           controller: textEditingController,
-          decoration: const InputDecoration(hintText: 'Enter a magic word'),
+          decoration: InputDecoration(hintText: l10n.enterMagicWord),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel)),
           TextButton(
             onPressed: () async {
               final magicWord = textEditingController.text.trim();
@@ -36,13 +40,14 @@ class _MagicListSettingsState extends State<MagicListSettings> {
               appState.addMagicWord(magicWord);
               _listKey.currentState?.insertItem(insertIndex);
 
-              _showSnackBar(context, magicWord, 'Magic word added', () {
+              _showSnackBar(context, magicWord, l10n.magicWordAdded, () {
                 if (insertIndex < (appState.magicList?.length ?? 0)) {
-                      final removed = appState.magicList!.removeAt(insertIndex);
-                      _listKey.currentState?.removeItem(
-                        insertIndex,
-                        (context, animation) => _buildAnimatedItem(removed, animation),
-                      );
+                  final removed = appState.magicList!.removeAt(insertIndex);
+                  _listKey.currentState?.removeItem(
+                    insertIndex,
+                    (context, animation) =>
+                        _buildAnimatedItem(removed, animation),
+                  );
                   appState.saveAllData();
                 }
               });
@@ -50,7 +55,7 @@ class _MagicListSettingsState extends State<MagicListSettings> {
               appState.saveAllData();
               if (context.mounted) Navigator.of(context).pop();
             },
-            child: const Text('Add'),
+            child: Text(l10n.add),
           ),
         ],
       ),
@@ -59,17 +64,20 @@ class _MagicListSettingsState extends State<MagicListSettings> {
 
   void _showEditMagicWordDialog(String currentMagicWord, int index) {
     final textEditingController = TextEditingController(text: currentMagicWord);
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Theme.of(context).primaryColor,
-        title: const Text('Edit Magic Word'),
+        title: Text(l10n.editMagicWord),
         content: TextField(
           controller: textEditingController,
-          decoration: const InputDecoration(hintText: 'Enter a magic word'),
+          decoration: InputDecoration(hintText: l10n.enterMagicWord),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel)),
           TextButton(
             onPressed: () async {
               final newWord = textEditingController.text.trim();
@@ -80,33 +88,38 @@ class _MagicListSettingsState extends State<MagicListSettings> {
               // Usar el nuevo método editMagicWord
               appState.editMagicWord(index, newWord);
 
-              _showSnackBar(context, newWord, 'Magic word updated', () {
-                appState.editMagicWord(index, oldWord); // Deshacer con la palabra antigua
+              _showSnackBar(context, newWord, l10n.magicWordUpdated, () {
+                appState.editMagicWord(
+                    index, oldWord); // Deshacer con la palabra antigua
                 appState.saveAllData();
               });
 
               await appState.saveAllData();
               if (context.mounted) Navigator.of(context).pop();
             },
-            child: const Text('Save'),
+            child: Text(l10n.save),
           ),
         ],
       ),
     );
   }
 
-  void _showSnackBar(BuildContext context, String word, String message, VoidCallback undoCallback) {
+  void _showSnackBar(BuildContext context, String word, String message,
+      VoidCallback undoCallback) {
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         duration: const Duration(seconds: 2),
         backgroundColor: Theme.of(context).colorScheme.secondary,
-        action: SnackBarAction(label: 'Undo', onPressed: undoCallback),
+        action: SnackBarAction(label: l10n.undo, onPressed: undoCallback),
       ),
     );
   }
 
-  Widget _buildAnimatedItem(String word, Animation<double> animation, [int? index]) {
+  Widget _buildAnimatedItem(String word, Animation<double> animation,
+      [int? index]) {
+    final l10n = AppLocalizations.of(context)!;
     return SizeTransition(
       sizeFactor: animation,
       child: ListTile(
@@ -128,10 +141,11 @@ class _MagicListSettingsState extends State<MagicListSettings> {
                   final removed = appState.magicList!.removeAt(index);
                   _listKey.currentState?.removeItem(
                     index,
-                    (context, animation) => _buildAnimatedItem(removed, animation),
+                    (context, animation) =>
+                        _buildAnimatedItem(removed, animation),
                   );
 
-                  _showSnackBar(context, removed, 'Magic word removed', () {
+                  _showSnackBar(context, removed, l10n.magicWordRemoved, () {
                     appState.magicList!.insert(index, removed);
                     _listKey.currentState?.insertItem(index);
                     appState.saveAllData();
@@ -151,10 +165,11 @@ class _MagicListSettingsState extends State<MagicListSettings> {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final magicList = appState.magicList ?? [];
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Magic Words'),
+        title: Text(l10n.magicList),
         centerTitle: true,
         backgroundColor: Theme.of(context).primaryColor,
       ),
@@ -173,7 +188,8 @@ class _MagicListSettingsState extends State<MagicListSettings> {
               SliverAnimatedList(
                 key: _listKey,
                 initialItemCount: magicList.length,
-                itemBuilder: (context, index, animation) => _buildAnimatedItem(magicList[index], animation, index),
+                itemBuilder: (context, index, animation) =>
+                    _buildAnimatedItem(magicList[index], animation, index),
               ),
             ],
           ),

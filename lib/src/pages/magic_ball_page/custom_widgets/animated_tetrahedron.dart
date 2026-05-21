@@ -1,7 +1,3 @@
-import 'package:flutter/material.dart';
-import 'dart:math';
-import 'package:sensors_plus/sensors_plus.dart';
-import 'package:vector_math/vector_math.dart' as vector;
 /*
 void main() => runApp(const MyApp());
 

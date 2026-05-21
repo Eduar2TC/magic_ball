@@ -26,7 +26,7 @@ class BubbleEffectState extends State<BubbleEffect> with TickerProviderStateMixi
     super.initState();
     bubbles = List.generate(numberOfBubbles, (index) =>
         Bubble(width: widget.width, height: widget.height));
-    bubbles.forEach((bubble) {
+    for (var bubble in bubbles) {
       bubble.controller = AnimationController(
         duration: Duration(seconds: bubble.durationInSeconds),
         vsync: this,
@@ -37,12 +37,14 @@ class BubbleEffectState extends State<BubbleEffect> with TickerProviderStateMixi
         }
       });
       bubble.controller.forward();
-    });
+    }
   }
 
   @override
   void dispose() {
-    bubbles.forEach((bubble) => bubble.controller.dispose());
+    for (var bubble in bubbles) {
+      bubble.controller.dispose();
+    }
     super.dispose();
   }
 
@@ -423,7 +425,7 @@ class AnimatedTetrahedronState extends State<AnimatedTetrahedron>
   late AnimationController _sensorController;
   late Animation<double> _buttonAnimation;
 
-  bool _isAnimating = true;
+  final bool _isAnimating = true;
 
   @override
   void initState() {

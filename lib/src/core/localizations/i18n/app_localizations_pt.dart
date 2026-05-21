@@ -24,6 +24,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get dropDownOptionSpanish => 'Espanhol';
 
   @override
+  String get dropDownOptionPortuguese => 'Português';
+
+  @override
   String get magicList_empty => 'Vazio';
 
   @override
@@ -40,6 +43,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get save => 'Salvar';
+
+  @override
+  String get add => 'Adicionar';
 
   @override
   String get shakeToGetAnswer => 'Agite para obter resposta';

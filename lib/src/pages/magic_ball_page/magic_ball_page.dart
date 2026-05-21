@@ -14,7 +14,7 @@ import 'package:magic_ball/src/pages/magic_ball_page/custom_widgets/animations.d
 import 'package:magic_ball/src/services/initialization_local_data_service.dart';
 import 'package:magic_ball/src/utils/audio.dart';
 import 'package:magic_ball/src/utils/data_configurations.dart';
-import 'package:magic_ball/src/utils/lang_helper.dart';
+import 'package:magic_ball/src/core/localizations/i18n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'custom_widgets/triangle.dart';
@@ -26,17 +26,22 @@ class MagicBallPage extends StatefulWidget {
   MagicBallPageState createState() => MagicBallPageState();
 }
 
-class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMixin {
+class MagicBallPageState extends State<MagicBallPage>
+    with TickerProviderStateMixin {
   late final Audio audio;
   String? magicAnswer;
   bool isOnPressed = false;
   late BallAnimations ballAnimations;
   final ValueNotifier<void> notifier = ValueNotifier<void>(null);
   final ValueNotifier<bool> isOnPressedNotifier = ValueNotifier<bool>(false);
-  final ValueNotifier<String?> magicAnswerNotifier = ValueNotifier<String?>(null);
-  final ValueNotifier<bool> showShakeBubblesNotifier = ValueNotifier<bool>(false);
-  final ValueNotifier<bool> showBubbleEffectNotifier = ValueNotifier<bool>(false); //TODO: fix this functionallity
-  final ValueNotifier<bool> showLiquidTetrahedronNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<String?> magicAnswerNotifier =
+      ValueNotifier<String?>(null);
+  final ValueNotifier<bool> showShakeBubblesNotifier =
+      ValueNotifier<bool>(false);
+  final ValueNotifier<bool> showBubbleEffectNotifier =
+      ValueNotifier<bool>(false); //TODO: fix this functionallity
+  final ValueNotifier<bool> showLiquidTetrahedronNotifier =
+      ValueNotifier<bool>(false);
   late Future<void> _iniDataFuture;
 
   @override
@@ -71,16 +76,15 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
     if (appState.magicList == null || appState.magicList!.isEmpty) {
       return 'Empty';
     }
-    return appState.magicList?[math.Random().nextInt(appState.magicList!.length)];
+    return appState
+        .magicList?[math.Random().nextInt(appState.magicList!.length)];
   }
 
   @override
   Widget build(BuildContext context) {
     final AppState appState = Provider.of<AppState>(context);
     final DataConfigurations? dataConfigurations = appState.dataConfigurations;
-    final String currentLang = appState.currentLanguage;
-    final Map<dynamic, dynamic>? langStrings = dataConfigurations?.langStrings;
-    final String appBarTitle = getLang(langStrings, currentLang, ['appbarTitle', 'home']) ?? 'Ask anything';
+    final String appBarTitle = AppLocalizations.of(context)!.appbarTitle_home;
 
     return FutureBuilder(
       future: _iniDataFuture,
@@ -109,7 +113,8 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
               appBarTitle,
               style: TextStyle(color: dataConfigurations?.titleAppBarColor),
             ),
-            backgroundColor: dataConfigurations?.appBarColor ?? const Color(0xff10024f),
+            backgroundColor:
+                dataConfigurations?.appBarColor ?? const Color(0xff10024f),
             centerTitle: true,
             actions: [
               IconButton(
@@ -158,8 +163,12 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
           ballAnimations.answerAnimationController.forward();
           isOnPressedNotifier.value = false;
           //show bubbles
-          ballAnimations.ballAnimation.isAnimating ? showShakeBubblesNotifier.value = true : showShakeBubblesNotifier.value = false;
-          ballAnimations.ballAnimation.isAnimating ? showBubbleEffectNotifier.value = false : showBubbleEffectNotifier.value = true;
+          ballAnimations.ballAnimation.isAnimating
+              ? showShakeBubblesNotifier.value = true
+              : showShakeBubblesNotifier.value = false;
+          ballAnimations.ballAnimation.isAnimating
+              ? showBubbleEffectNotifier.value = false
+              : showBubbleEffectNotifier.value = true;
           showLiquidTetrahedronNotifier.value = true;
         }).then((_) {
           //hide magic response
@@ -214,7 +223,8 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
     return ValueListenableBuilder<String?>(
       valueListenable: magicAnswerNotifier,
       builder: (context, magicAnswer, _) {
-        final randomZAngle = (math.Random().nextDouble() * (math.pi / 4)) + (-math.pi / 4); // random z between 45 to 90 degrees
+        final randomZAngle = (math.Random().nextDouble() * (math.pi / 4)) +
+            (-math.pi / 4); // random z between 45 to 90 degrees
         final alternateRotationDirection = math.Random().nextBool();
         return ClipOval(
           clipBehavior: Clip.antiAlias,
@@ -241,9 +251,17 @@ class MagicBallPageState extends State<MagicBallPage> with TickerProviderStateMi
                         0.0,
                       )
                       ..setRotationZ(
-                        alternateRotationDirection ? randomZAngle * ballAnimations.answerAnimation.value : -randomZAngle * ballAnimations.answerAnimation.value,
+                        alternateRotationDirection
+                            ? randomZAngle *
+                                ballAnimations.answerAnimation.value
+                            : -randomZAngle *
+                                ballAnimations.answerAnimation.value,
                       )
-                      ..scale(1.5 - math.cos(ballAnimations.answerAnimation.value * math.pi * 0.3) * 1.0),
+                      ..scale(1.5 -
+                          math.cos(ballAnimations.answerAnimation.value *
+                                  math.pi *
+                                  0.3) *
+                              1.0),
                     child: MagicBallTriangle(
                       magicAnswer: magicAnswer ?? '',
                       size: MediaQuery.of(context).size.width * 0.4,
@@ -278,7 +296,8 @@ class RealisticBubbleEffect extends StatefulWidget {
   State<RealisticBubbleEffect> createState() => _RealisticBubbleEffectState();
 }
 
-class _RealisticBubbleEffectState extends State<RealisticBubbleEffect> with TickerProviderStateMixin {
+class _RealisticBubbleEffectState extends State<RealisticBubbleEffect>
+    with TickerProviderStateMixin {
   final List<_BubbleModel> _bubbles = [];
   bool _running = true;
 
@@ -320,7 +339,8 @@ class _RealisticBubbleEffectState extends State<RealisticBubbleEffect> with Tick
         width: widget.size,
         height: widget.size,
         child: Stack(
-          children: _bubbles.where((b) => !b.removed).map((b) => b.build()).toList(),
+          children:
+              _bubbles.where((b) => !b.removed).map((b) => b.build()).toList(),
         ),
       ),
     );
@@ -347,7 +367,8 @@ class _BubbleModel {
     this.onRemove,
   );
 
-  factory _BubbleModel.random(double size, TickerProvider vsync, {required VoidCallback onRemove}) {
+  factory _BubbleModel.random(double size, TickerProvider vsync,
+      {required VoidCallback onRemove}) {
     final random = Random();
     final radius = size / 2;
     final centerX = size / 2;
@@ -372,7 +393,9 @@ class _BubbleModel {
     )..forward();
 
     final appearAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: controller, curve: const Interval(0.0, 0.2, curve: Curves.easeOut)),
+      CurvedAnimation(
+          parent: controller,
+          curve: const Interval(0.0, 0.2, curve: Curves.easeOut)),
     );
 
     controller.addStatusListener((status) {

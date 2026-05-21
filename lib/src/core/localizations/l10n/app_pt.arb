@@ -1,0 +1,79 @@
+{
+  "@@locale": "pt",
+  "appbarTitle_home": "Pergunte qualquer coisa",
+  "@appbarTitle_home": {
+    "description": "Título da barra de aplicativos na página inicial"
+  },
+  "appbarTitle_settings": "Configurações",
+  "@appbarTitle_settings": {
+    "description": "Título da barra de aplicativos na página de configurações"
+  },
+  "dropDownOptionTitle": "Idioma",
+  "@dropDownOptionTitle": {
+    "description": "Título da opção de menu suspenso para idioma"
+  },
+  "dropDownOptionEnglish": "Inglês",
+  "@dropDownOptionEnglish": {
+    "description": "Texto para a opção de idioma inglês"
+  },
+  "dropDownOptionSpanish": "Espanhol",
+  "@dropDownOptionSpanish": {
+    "description": "Texto para a opção de idioma espanhol"
+  },
+  "dropDownOptionPortuguese": "Português",
+  "@dropDownOptionPortuguese": {
+    "description": "Texto para a opção de idioma português"
+  },
+  "magicList_empty": "Vazio",
+  "@magicList_empty": {
+    "description": "Mensaje exibida quando a lista mágica está vazia"
+  },
+  "addMagicWord": "Adicionar Palavra Mágica",
+  "@addMagicWord": {
+    "description": "Texto para o botão de adicionar palavra mágica"
+  },
+  "editMagicWord": "Editar Palavra Mágica",
+  "@editMagicWord": {
+    "description": "Texto para o botão de editar palavra mágica"
+  },
+  "enterMagicWord": "Digite uma palavra mágica",
+  "@enterMagicWord": {
+    "description": "Campo para digitar uma palavra mágica"
+  },
+  "cancel": "Cancelar",
+  "@cancel": {
+    "description": "Texto para o botão de cancelar"
+  },
+  "save": "Salvar",
+  "@save": {
+    "description": "Texto para o botão de salvar"
+  },
+  "add": "Adicionar",
+  "@add": {
+    "description": "Texto para o botão de adicionar"
+  },
+  "shakeToGetAnswer": "Agite para obter resposta",
+  "@shakeToGetAnswer": {
+    "description": "Texto para a opção de agitar para obter resposta"
+  },
+  "magicList": "Lista Mágica",
+  "@magicList": {
+    "description": "Título da lista mágica"
+  },
+  "undo": "Desfazer",
+  "@undo": {
+    "description": "Texto para o botón de desfazer"
+  },
+  "magicWordAdded": "Palavra mágica adicionada",
+  "@magicWordAdded": {
+    "description": "Mensagem exibida quando uma palavra mágica é adicionada"
+  },
+  "magicWordUpdated": "Palavra mágica atualizada",
+  "@magicWordUpdated": {
+    "description": "Mensagem exibida quando uma palavra mágica é atualizada"
+  },
+  "magicWordRemoved": "Palavra mágica removida",
+  "@magicWordRemoved": {
+    "description": "Mensagem exibida quando uma palavra mágica é removida"
+  }
+}

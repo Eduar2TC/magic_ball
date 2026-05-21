@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:magic_ball/src/services/initialization_local_data_service.dart';
 import 'package:magic_ball/src/models/app_state.dart';
-import 'package:magic_ball/src/utils/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:magic_ball/src/routes/routes.dart';
+import 'package:magic_ball/src/core/localizations/i18n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +28,9 @@ class MyApp extends StatelessWidget {
         primaryColor: appState.dataConfigurations?.appBarColor,
         brightness: appState.dataConfigurations?.brightness,
       ),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: Locale(appState.currentLanguage),
     );
   }
 }
