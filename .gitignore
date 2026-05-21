@@ -44,3 +44,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# macOS
+.DS_Store
+._*
+
+# Flutter / IDE
+.flutter_pid
+.logcat_pid
+android/.project
+android/.settings/
+ios/**/._*
+
