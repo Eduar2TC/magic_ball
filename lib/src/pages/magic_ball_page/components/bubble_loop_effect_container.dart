@@ -4,17 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:magic_ball/src/pages/magic_ball_page/custom_widgets/bubble_effect.dart';
 
 class BubbleLoopEffectContainer extends StatelessWidget {
-  final ValueNotifier<bool> showBoobles;
-  const BubbleLoopEffectContainer({super.key, required this.showBoobles});
+  final ValueNotifier<bool> showBubbles;
+  const BubbleLoopEffectContainer({super.key, required this.showBubbles});
 
   @override
   Widget build(BuildContext context) {
     //generate random bubbles between 3 to 5
     int randomBubbles = Random().nextInt(3) + 2;
     return ValueListenableBuilder<bool>(
-      valueListenable: showBoobles,
-      builder: (context, showBoobles, _) {
-        return showBoobles
+      valueListenable: showBubbles,
+      builder: (context, showBubblesVal, _) {
+        return showBubblesVal
             ? ClipOval(
                 clipBehavior: Clip.antiAlias,
                 child: SizedBox(

@@ -1,13 +1,10 @@
-// ...existing code...
+import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:vector_math/vector_math_64.dart' as vmath;
 
-// ═══════════════════════════════════════════════════════════════
-// WIDGET PRINCIPAL  (misma API que el original)
-// ═══════════════════════════════════════════════════════════════
 class LiquidTetrahedron extends StatefulWidget {
   final double size;
   final String answer;
@@ -46,8 +43,18 @@ class _LiquidTetrahedronState extends State<LiquidTetrahedron>
   @override
   void initState() {
     super.initState();
-    final rand = math.Random();
+    log('LiquidTetrahedron initState → answer: ${widget.answer}');
+    _initRandom();
+    _initControllers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _mainController.forward();
+      _floatController.repeat(reverse: true);
+      _bubbleController.repeat();
+    });
+  }
 
+  void _initRandom() {
+    final rand = math.Random();
     final angle = rand.nextDouble() * 2 * math.pi;
     final distance = 150.0 + rand.nextDouble() * 100.0;
     _originX = math.cos(angle) * distance;
@@ -65,14 +72,16 @@ class _LiquidTetrahedronState extends State<LiquidTetrahedron>
     _liquidDensity = 0.8 + rand.nextDouble() * 0.4;
     _buoyancyForce = 0.3 + rand.nextDouble() * 0.2;
     _bubbles = List.generate(6, (i) => Bubble.random(rand));
+  }
 
+  void _initControllers() {
     _mainController = AnimationController(
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     _mainAnimation = CurvedAnimation(
       parent: _mainController,
-      curve: Curves.easeOutExpo,
+      curve: Curves.easeOutCubic,
     );
 
     _floatController = AnimationController(
@@ -88,12 +97,6 @@ class _LiquidTetrahedronState extends State<LiquidTetrahedron>
     );
     _bubbleAnimation =
         CurvedAnimation(parent: _bubbleController, curve: Curves.linear);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _mainController.forward();
-      _floatController.repeat(reverse: true);
-      _bubbleController.repeat();
-    });
   }
 
   @override
@@ -164,7 +167,6 @@ class _LiquidTetrahedronState extends State<LiquidTetrahedron>
     final targetNormal = vmath.Vector3(0, 0, 1);
 
     vmath.Quaternion q1;
-    // Manejar normales ya alineadas o opuestas robustamente
     if ((normal - targetNormal).length < 1e-6) {
       q1 = vmath.Quaternion.identity();
     } else if ((normal + targetNormal).length < 1e-6) {
@@ -247,7 +249,6 @@ class _LiquidTetrahedronState extends State<LiquidTetrahedron>
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // Burbujas
               ..._bubbles.map((bubble) => Positioned(
                     left: widget.size / 2 +
                         bubble.getX(bubbleT) -
@@ -262,7 +263,6 @@ class _LiquidTetrahedronState extends State<LiquidTetrahedron>
                     ),
                   )),
 
-              // Icosaedro
               Center(
                 child: Opacity(
                   opacity: opacity.clamp(0.0, 1.0),
@@ -291,9 +291,6 @@ class _LiquidTetrahedronState extends State<LiquidTetrahedron>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// BURBUJA VISUAL
-// ═══════════════════════════════════════════════════════════════
 class _BubbleWidget extends StatelessWidget {
   final double size;
   const _BubbleWidget({required this.size});
@@ -313,17 +310,13 @@ class _BubblePainter extends CustomPainter {
   void paint(Canvas canvas, Size s) {
     final r = size / 2;
     final c = Offset(r, r);
-    // Cuerpo traslúcido
-    canvas.drawCircle(c, r,
-        Paint()..color = const Color(0x1A90CAF9));
-    // Borde fresnel
+    canvas.drawCircle(c, r, Paint()..color = const Color(0x1A90CAF9));
     canvas.drawCircle(
         c, r - 0.4,
         Paint()
           ..color = const Color(0x6090CAF9)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 0.7);
-    // Especular
     canvas.drawOval(
       Rect.fromCenter(
           center: c + Offset(-r * 0.18, -r * 0.32),
@@ -339,9 +332,6 @@ class _BubblePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter _) => false;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// DATOS DE BURBUJA
-// ═══════════════════════════════════════════════════════════════
 class Bubble {
   final double x, y, size, speed, phase;
   Bubble(this.x, this.y, this.size, this.speed, this.phase);
@@ -361,9 +351,6 @@ class Bubble {
       0.3 + 0.3 * math.sin(t * 2 * math.pi * speed * 2 + phase);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// GEOMETRÍA — icosaedro exacto
-// ═══════════════════════════════════════════════════════════════
 final List<List<double>> _icoVertices = (() {
   final double phi = (1.0 + math.sqrt(5.0)) / 2.0;
   return <List<double>>[
@@ -380,22 +367,14 @@ const List<List<int>> _icoFaces = [
   [4, 9, 5],  [2, 4, 11], [6, 2, 10], [8, 6, 7],  [9, 8, 1],
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// PAINTER REALISTA
-// Conserva la proyección y backface culling del original.
-// Mejora: iluminación Lambert + Phong, fresnel en bordes,
-//          gradientes por cara, specular highlight, caustics.
-// ═══════════════════════════════════════════════════════════════
 class RealisticIcosahedronPainter extends CustomPainter {
   final vmath.Matrix4 matrix;
   final String answer;
   final double animationProgress;
   final double floatProgress;
 
-  // Luz principal: superior-izquierda hacia cámara
   static final vmath.Vector3 _keyLight =
       vmath.Vector3(-0.35, -0.65, 0.85).normalized();
-  // Luz de relleno: inferior-derecha, más tenue
   static final vmath.Vector3 _fillLight =
       vmath.Vector3(0.55, 0.45, 0.35).normalized();
 
@@ -405,14 +384,13 @@ class RealisticIcosahedronPainter extends CustomPainter {
   static const Color _accentBlue  = Color(0xFF4FC3F7);
   static const Color _frostWhite  = Color(0xFFE3F2FD);
 
-  RealisticIcosahedronPainter({
+  const RealisticIcosahedronPainter({
     required this.matrix,
     required this.answer,
     required this.animationProgress,
     required this.floatProgress,
   });
 
-  // ── PROYECCIÓN IDÉNTICA AL ORIGINAL ──
   Offset _project(vmath.Vector3 v, double size) {
     const double d = 2.0;
     final double perspective = d / (d + v.z);
@@ -474,7 +452,6 @@ class RealisticIcosahedronPainter extends CustomPainter {
     final focalEntry =
         faceDepths.reduce((a, b) => (a['z'] as num) > (b['z'] as num) ? a : b);
     final int focalIdx = (focalEntry['index'] as num).toInt();
-    final double focalZ = (focalEntry['z'] as num).toDouble();
 
     faceDepths.sort((a, b) => (a['z'] as num).compareTo(b['z'] as num));
 
@@ -511,7 +488,6 @@ class RealisticIcosahedronPainter extends CustomPainter {
 
       final double zAvg = (fd['z'] as num).toDouble();
       final double depthNorm = ((zAvg - minZ) / depthRange).clamp(0.0, 1.0);
-      final double depthDiff = zAvg - focalZ;
 
       if (!facingCam) {
         final backDot = (-viewDot).clamp(0.0, 1.0);
@@ -643,21 +619,14 @@ class RealisticIcosahedronPainter extends CustomPainter {
           ..strokeJoin = StrokeJoin.round,
       );
 
-      if (depthDiff.abs() > 0.5) {
-        final elev = (depthDiff.abs() * 2.5).clamp(0.0, 4.0);
-        canvas.drawShadow(
-            path, Colors.black.withOpacity(0.25 * opacity), elev, false);
-      }
-
-      if (isFocal && animationProgress > 0.5) {
-        final textOp = math.min((animationProgress - 0.5) / 0.5, 1.0);
+      if (isFocal) {
+        final textOp = (animationProgress * 2.0).clamp(0.0, 1.0);
         _drawText(canvas, pts, textOp, Size(w, w));
       }
     }
   }
 
-  void _drawText(
-      Canvas canvas, List<Offset> pts, double textOp, Size size) {
+  void _drawText(Canvas canvas, List<Offset> pts, double textOp, Size size) {
     final center = Offset(
       (pts[0].dx + pts[1].dx + pts[2].dx) / 3,
       (pts[0].dy + pts[1].dy + pts[2].dy) / 3,
@@ -775,6 +744,9 @@ class RealisticIcosahedronPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant RealisticIcosahedronPainter _) => true;
+  bool shouldRepaint(covariant RealisticIcosahedronPainter old) =>
+      old.answer != answer ||
+      old.animationProgress != animationProgress ||
+      old.floatProgress != floatProgress ||
+      old.matrix != matrix;
 }
-// ...existing code...

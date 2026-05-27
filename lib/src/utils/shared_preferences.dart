@@ -4,7 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 //Get data if it exist in shared preferences device , if not return predefined constant data
 class SharedPreferencesUtils {
   late SharedPreferences sharedPreferences;
-
+  static const String _keyShakeSensitivity = 'shake_sensitivity';
+  static const String _keyTapToGetAnswerEnabled = 'tap_to_get_answer_enabled'; // Nueva clave
+  
   SharedPreferencesUtils() {
     initializeSharedPreferences();
   }
@@ -78,5 +80,46 @@ class SharedPreferencesUtils {
       'magicList',
       magicList,
     );
+  }
+
+  // Shake to get answer settings
+  Future<bool?> getShakeToGetAnswerEnabled() async {
+    await initializeSharedPreferences();
+    try {
+      return sharedPreferences.getBool('shakeToGetAnswerEnabled');
+    } catch (e) {
+      log('Error getting shake to get answer setting: $e');
+      return null;
+    }
+  }
+
+  Future<void> saveShakeToGetAnswerEnabled(bool enabled) async {
+    await initializeSharedPreferences();
+    try {
+      await sharedPreferences.setBool('shakeToGetAnswerEnabled', enabled);
+    } catch (e) {
+      log('Error saving shake to get answer setting: $e');
+    }
+  }
+
+  Future<void> saveShakeSensitivity(double sensitivity) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_keyShakeSensitivity, sensitivity);
+  }
+  
+  Future<double?> getShakeSensitivity() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(_keyShakeSensitivity);
+  }
+  // Nuevo método para guardar la preferencia de tap
+  Future<void> saveTapToGetAnswerEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyTapToGetAnswerEnabled, enabled);
+  }
+  
+  // Nuevo método para obtener la preferencia de tap
+  Future<bool?> getTapToGetAnswerEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyTapToGetAnswerEnabled);
   }
 }

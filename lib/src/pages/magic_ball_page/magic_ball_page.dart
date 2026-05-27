@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:magic_ball/src/models/app_state.dart';
@@ -12,12 +10,20 @@ import 'package:magic_ball/src/pages/magic_ball_page/components/bubbles_shacking
 import 'package:magic_ball/src/pages/magic_ball_page/components/liquid_tetrahedron_container.dart';
 import 'package:magic_ball/src/pages/magic_ball_page/custom_widgets/animations.dart';
 import 'package:magic_ball/src/services/initialization_local_data_service.dart';
+import 'package:magic_ball/src/services/sensor_service.dart';
 import 'package:magic_ball/src/utils/audio.dart';
-import 'package:magic_ball/src/utils/data_configurations.dart';
 import 'package:magic_ball/src/core/localizations/i18n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-import 'custom_widgets/triangle.dart';
+const Duration _bubbleEffectDelay = Duration(milliseconds: 3500);
+const Duration _answerRevealDelay = Duration(milliseconds: 1500);
+const Duration _answerHideDelay = Duration(milliseconds: 3000);
+const Duration _sensorShowDuration = Duration(milliseconds: 3000);
+const Color _primaryGradientColor = Color(0xff28237d);
+const Color _secondaryGradientColor = Color(0xff10024f);
+const Color _loadingIndicatorColor = Color(0xff10024f);
+const double _gradientRadius = 0.8;
+const double _gradientStop1 = 0.65;
 
 class MagicBallPage extends StatefulWidget {
   const MagicBallPage({super.key});
@@ -27,94 +33,282 @@ class MagicBallPage extends StatefulWidget {
 }
 
 class MagicBallPageState extends State<MagicBallPage>
-    with TickerProviderStateMixin {
-  late final Audio audio;
-  String? magicAnswer;
-  bool isOnPressed = false;
-  late BallAnimations ballAnimations;
-  final ValueNotifier<void> notifier = ValueNotifier<void>(null);
-  final ValueNotifier<bool> isOnPressedNotifier = ValueNotifier<bool>(false);
-  final ValueNotifier<String?> magicAnswerNotifier =
-      ValueNotifier<String?>(null);
-  final ValueNotifier<bool> showShakeBubblesNotifier =
-      ValueNotifier<bool>(false);
-  final ValueNotifier<bool> showBubbleEffectNotifier =
-      ValueNotifier<bool>(false); //TODO: fix this functionallity
-  final ValueNotifier<bool> showLiquidTetrahedronNotifier =
-      ValueNotifier<bool>(false);
+    with TickerProviderStateMixin, WidgetsBindingObserver {
+  late final Audio _audio;
+  late BallAnimations _ballAnimations;
   late Future<void> _iniDataFuture;
+  late final SensorService _sensorService;
+
+  final ValueNotifier<Offset> _ballOffsetNotifier = ValueNotifier<Offset>(Offset.zero);
+  final ValueNotifier<double> _ballScaleNotifier = ValueNotifier<double>(1.0);
+  final ValueNotifier<double> _sensorIntensityNotifier = ValueNotifier<double>(0.0);
+  final ValueNotifier<bool> _showAnswerNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<String> _currentAnswerNotifier = ValueNotifier<String>('?');
+  final ValueNotifier<bool> _showShakeBubblesNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _showBubbleEffectNotifier = ValueNotifier<bool>(false);
+  
+  String? _lastAnswer;
+  bool _isProcessingShake = false;
+  bool _isTapMode = false;
+  Timer? _sensorHideTimer;
+  double _currentIntensity = 0.0;
+  double _currentZ = 0.0;
 
   @override
   void initState() {
     super.initState();
-    audio = Audio();
-    ballAnimations = BallAnimations(notifier);
-    ballAnimations.initializeAnimations(this, audio.playPop);
-    //showBubbleEffect with delayed
-    Future.delayed(const Duration(milliseconds: 3500), () {
-      showBubbleEffectNotifier.value = true;
-      showLiquidTetrahedronNotifier.value = true;
-    });
+    WidgetsBinding.instance.addObserver(this);
+    _audio = Audio();
+    _ballAnimations = BallAnimations(ValueNotifier<void>(null));
+    _ballAnimations.initializeAnimations(this, _audio.playPop);
+    _initSensor();
     _iniDataFuture = _initDataService();
+
+    Future.delayed(_bubbleEffectDelay, () {
+      if (mounted) _showBubbleEffectNotifier.value = true;
+    });
+  }
+
+  void _initSensor() {
+    _sensorService = SensorService();
+
+    _sensorService.onPositionChanged = (x, y, z) {
+      if (!mounted || _isTapMode) return;
+      
+      _currentZ = z;
+      final intensity = math.sqrt(x * x + y * y + z * z).clamp(0.0, 1.0);
+      _currentIntensity = intensity;
+      
+      _ballOffsetNotifier.value = Offset(x * 30, y * 30);
+      _ballScaleNotifier.value = 1.0 + (z.abs() * 0.1);
+      _sensorIntensityNotifier.value = intensity;
+      
+      if (!_isProcessingShake && intensity > 0.75) {
+        final appState = Provider.of<AppState>(context, listen: false);
+        if (appState.shakeToGetAnswerEnabled) {
+          _processShake();
+        }
+      }
+    };
+
+    _sensorService.onShakeDetected = (magnitude) {
+      if (!mounted || _isProcessingShake || _isTapMode) return;
+      final appState = Provider.of<AppState>(context, listen: false);
+      if (appState.shakeToGetAnswerEnabled) {
+        _processShake();
+      }
+    };
+  }
+
+  Future<void> _processShake() async {
+    if (_isProcessingShake) return;
+    _isProcessingShake = true;
+    
+    _showAnswerNotifier.value = false;
+    _showBubbleEffectNotifier.value = false;
+    _showShakeBubblesNotifier.value = true;
+
+    _audio.playShake();
+
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (!mounted || !_isProcessingShake) {
+      _isProcessingShake = false;
+      return;
+    }
+
+    _showShakeBubblesNotifier.value = false;
+
+    final String answer = await _getMagicAnswer();
+    if (!mounted || !_isProcessingShake) {
+      _isProcessingShake = false;
+      return;
+    }
+
+    _currentAnswerNotifier.value = answer;
+
+    await Future.delayed(const Duration(milliseconds: 50));
+    if (!mounted || !_isProcessingShake) {
+      _isProcessingShake = false;
+      return;
+    }
+
+    _showAnswerNotifier.value = true;
+
+    _ballAnimations.answerAnimationController.forward(from: 0.0);
+
+    _sensorHideTimer?.cancel();
+    _sensorHideTimer = Timer(_sensorShowDuration, () {
+      if (!mounted) {
+        _isProcessingShake = false;
+        return;
+      }
+      
+      _ballAnimations.answerAnimationController.reverse();
+      
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) {
+          _showAnswerNotifier.value = false;
+          _showBubbleEffectNotifier.value = true;
+          _isProcessingShake = false;
+        }
+      });
+    });
+  }
+
+  Future<void> _activateTap() async {
+    if (_isProcessingShake || _isTapMode) return;
+    _isTapMode = true;
+    _isProcessingShake = true;
+    
+    _showAnswerNotifier.value = false;
+    _showBubbleEffectNotifier.value = false;
+    _showShakeBubblesNotifier.value = true;
+
+    _audio.playShake();
+
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted) {
+      _isProcessingShake = false;
+      _isTapMode = false;
+      return;
+    }
+
+    _showShakeBubblesNotifier.value = false;
+
+    final String answer = await _getMagicAnswer();
+    if (!mounted) {
+      _isProcessingShake = false;
+      _isTapMode = false;
+      return;
+    }
+
+    _currentAnswerNotifier.value = answer;
+
+    await Future.delayed(const Duration(milliseconds: 32));
+    if (!mounted) {
+      _isProcessingShake = false;
+      _isTapMode = false;
+      return;
+    }
+
+    _showAnswerNotifier.value = true;
+    _ballOffsetNotifier.value = Offset.zero;
+
+    await _ballAnimations.ballAnimationController.forward();
+    await Future.delayed(_answerRevealDelay);
+
+    _ballAnimations.answerAnimationController.forward();
+
+    await Future.delayed(_answerHideDelay);
+    _ballAnimations.answerAnimationController.reverse();
+
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (mounted) {
+      _showAnswerNotifier.value = false;
+      _showBubbleEffectNotifier.value = true;
+      _isProcessingShake = false;
+      _isTapMode = false;
+    }
+  }
+
+  Future<String> _getMagicAnswer() async {
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final list = await appState.getMagicList();
+
+      if (list.isEmpty) return 'Ask again...';
+      if (list.length == 1) return list.first;
+
+      String selected;
+      if (_lastAnswer != null && list.contains(_lastAnswer) && list.length > 1) {
+        final filteredList = list.where((a) => a != _lastAnswer).toList();
+        selected = filteredList.isNotEmpty
+            ? filteredList[math.Random().nextInt(filteredList.length)]
+            : list[math.Random().nextInt(list.length)];
+      } else {
+        selected = list[math.Random().nextInt(list.length)];
+      }
+
+      _lastAnswer = selected;
+      return selected;
+    } catch (e) {
+      return 'Try again';
+    }
+  }
+
+  void _onTap() {
+    final appState = Provider.of<AppState>(context, listen: false);
+    if (!appState.tapToGetAnswerEnabled) return;
+    _activateTap();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    final appState = Provider.of<AppState>(context, listen: false);
+
+    if (state == AppLifecycleState.resumed && appState.shakeToGetAnswerEnabled) {
+      _sensorService.startListening();
+    } else if (state == AppLifecycleState.paused) {
+      _sensorService.stopListening();
+    }
+  }
+
+  void _updateSensorState(bool enabled) {
+    if (enabled && !_sensorService.isListening) {
+      _sensorService.startListening();
+    } else if (!enabled && _sensorService.isListening) {
+      _sensorService.stopListening();
+      _ballOffsetNotifier.value = Offset.zero;
+      _sensorIntensityNotifier.value = 0.0;
+    }
   }
 
   @override
   void dispose() {
-    ballAnimations.dispose();
-    notifier.dispose();
-    isOnPressedNotifier.dispose();
-    magicAnswerNotifier.dispose();
-    showShakeBubblesNotifier.dispose();
-    showBubbleEffectNotifier.dispose();
-    showLiquidTetrahedronNotifier.dispose();
+    _sensorHideTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _ballAnimations.dispose();
+    _ballOffsetNotifier.dispose();
+    _ballScaleNotifier.dispose();
+    _sensorIntensityNotifier.dispose();
+    _showAnswerNotifier.dispose();
+    _currentAnswerNotifier.dispose();
+    _showShakeBubblesNotifier.dispose();
+    _showBubbleEffectNotifier.dispose();
+    _sensorService.dispose();
     super.dispose();
-  }
-
-  Future<String?> getMagicWord(BuildContext context) async {
-    final appState = Provider.of<AppState>(context, listen: false);
-    await appState.getMagicList();
-    if (appState.magicList == null || appState.magicList!.isEmpty) {
-      return 'Empty';
-    }
-    return appState
-        .magicList?[math.Random().nextInt(appState.magicList!.length)];
   }
 
   @override
   Widget build(BuildContext context) {
-    final AppState appState = Provider.of<AppState>(context);
-    final DataConfigurations? dataConfigurations = appState.dataConfigurations;
-    final String appBarTitle = AppLocalizations.of(context)!.appbarTitle_home;
+    final appState = Provider.of<AppState>(context);
+    final isTapEnabled = appState.tapToGetAnswerEnabled;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateSensorState(appState.shakeToGetAnswerEnabled);
+      _sensorService.setShakeSensitivity(appState.shakeSensitivity);
+    });
 
     return FutureBuilder(
       future: _iniDataFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            backgroundColor: Color(0xff10024f),
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xff10024f)),
-              ),
-            ),
+            backgroundColor: _loadingIndicatorColor,
+            body: Center(child: CircularProgressIndicator()),
           );
         }
-        if (snapshot.hasError) {
-          return Scaffold(
-            body: Center(
-              child: Text('Error loading data $snapshot.error '),
-            ),
-          );
-        }
+
         return Scaffold(
-          backgroundColor: dataConfigurations?.backgroundColor,
+          backgroundColor: appState.dataConfigurations?.backgroundColor,
           appBar: AppBar(
             title: Text(
-              appBarTitle,
-              style: TextStyle(color: dataConfigurations?.titleAppBarColor),
+              AppLocalizations.of(context)!.appbarTitle_home,
+              style: TextStyle(color: appState.dataConfigurations?.titleAppBarColor),
             ),
-            backgroundColor:
-                dataConfigurations?.appBarColor ?? const Color(0xff10024f),
+            backgroundColor: appState.dataConfigurations?.appBarColor ?? _secondaryGradientColor,
             centerTitle: true,
             actions: [
               IconButton(
@@ -127,149 +321,84 @@ class MagicBallPageState extends State<MagicBallPage>
             child: Container(
               decoration: const BoxDecoration(
                 gradient: RadialGradient(
-                  colors: [Color(0xff28237d), Color(0xff10024f)],
-                  stops: [0.65, 1],
+                  colors: [_primaryGradientColor, _secondaryGradientColor],
+                  stops: [_gradientStop1, 1],
                   center: Alignment.center,
-                  radius: 0.8,
+                  radius: _gradientRadius,
                 ),
               ),
               child: Center(
                 child: GestureDetector(
-                  onTap: handleMagicBallPress,
-                  child: buildMagicBallContent(),
+                  onTap: isTapEnabled ? _onTap : null,
+                  child: ValueListenableBuilder<Offset>(
+                    valueListenable: _ballOffsetNotifier,
+                    builder: (context, offset, _) {
+                      return ValueListenableBuilder<double>(
+                        valueListenable: _ballScaleNotifier,
+                        builder: (context, scale, _) {
+                          return Transform.translate(
+                            offset: offset,
+                            child: Transform.scale(
+                              scale: scale,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  BallFigure(ballAnimations: _ballAnimations),
+                                  
+                                  ValueListenableBuilder<String>(
+                                    valueListenable: _currentAnswerNotifier,
+                                    builder: (context, currentAnswer, _) {
+                                      return ValueListenableBuilder<bool>(
+                                        valueListenable: _showAnswerNotifier,
+                                        builder: (context, showAnswer, _) {
+                                          final shouldShow = showAnswer || 
+                                              (!_isProcessingShake && _currentIntensity > 0.3);
+                                          
+                                          return AnimatedOpacity(
+                                            opacity: shouldShow ? 1.0 : 0.0,
+                                            duration: const Duration(milliseconds: 300),
+                                            child: AnimatedScale(
+                                              scale: shouldShow ? 0.8 + (_currentIntensity * 0.2) : 0.0,
+                                              duration: const Duration(milliseconds: 300),
+                                              curve: Curves.elasticOut,
+                                              child: LiquidTetrahedronContainer(
+                                                key: ValueKey('tetra_$currentAnswer'),
+                                                initialAnswer: currentAnswer,
+                                                sensorIntensity: _currentIntensity,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  
+                                  const BallShadow(),
+                                  
+                                  ValueListenableBuilder<bool>(
+                                    valueListenable: _showShakeBubblesNotifier,
+                                    builder: (context, showBubbles, _) {
+                                      return BubblesShackingEffectContainer(
+                                        showBubbles: showBubbles,
+                                        answer: '',
+                                      );
+                                    },
+                                  ),
+                                  
+                                  BubbleLoopEffectContainer(
+                                    showBubbles: _showBubbleEffectNotifier,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  void handleMagicBallPress() {
-    if (!isOnPressedNotifier.value) {
-      isOnPressedNotifier.value = true;
-      showShakeBubblesNotifier.value = true;
-      showBubbleEffectNotifier.value = false;
-      showLiquidTetrahedronNotifier.value = false;
-      audio.playShake();
-
-      ballAnimations.ballAnimationController.forward().then((_) {
-        //TODO: REFACTORIZE THIS
-        getMagicWord(context).then((value) {
-          magicAnswerNotifier.value = value;
-        });
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          ballAnimations.answerAnimationController.forward();
-          isOnPressedNotifier.value = false;
-          //show bubbles
-          ballAnimations.ballAnimation.isAnimating
-              ? showShakeBubblesNotifier.value = true
-              : showShakeBubblesNotifier.value = false;
-          ballAnimations.ballAnimation.isAnimating
-              ? showBubbleEffectNotifier.value = false
-              : showBubbleEffectNotifier.value = true;
-          showLiquidTetrahedronNotifier.value = true;
-        }).then((_) {
-          //hide magic response
-          Future.delayed(const Duration(milliseconds: 3000), () {
-            ballAnimations.answerAnimationController.reverse();
-          });
-        });
-      });
-    }
-  }
-
-  Widget buildMagicBallContent() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        BallFigure(
-          ballAnimations: ballAnimations,
-        ),
-        LiquidTetrahedronContainer(
-          showLiquid: showLiquidTetrahedronNotifier,
-          magicAnswerNotifier: magicAnswerNotifier,
-        ),
-        //buildMagicAnswer(),
-        const BallShadow(),
-        BubblesShackingEffectContainer(
-          showBubbles: showShakeBubblesNotifier,
-          anwer: '', //TODO: fix or remmove this parameter
-        ),
-        BubbleLoopEffectContainer(
-          showBoobles: showBubbleEffectNotifier,
-        ),
-      ],
-    );
-  }
-
-  double magicAnswerCounter(String? magicAnswer) {
-    if (magicAnswer != null) {
-      if (magicAnswer.length <= 3) {
-        return 60;
-      }
-    }
-    return 20;
-  }
-
-  FractionalOffset calculateFractionalOffset(double angle) {
-    final x = 0.5 + 0.5 * math.cos(angle);
-    final y = 0.5 + 0.5 * math.sin(angle);
-    return FractionalOffset(x, y);
-  }
-
-  Widget buildMagicAnswer() {
-    return ValueListenableBuilder<String?>(
-      valueListenable: magicAnswerNotifier,
-      builder: (context, magicAnswer, _) {
-        final randomZAngle = (math.Random().nextDouble() * (math.pi / 4)) +
-            (-math.pi / 4); // random z between 45 to 90 degrees
-        final alternateRotationDirection = math.Random().nextBool();
-        return ClipOval(
-          clipBehavior: Clip.antiAlias,
-          child: AnimatedBuilder(
-            animation: ballAnimations.answerAnimation,
-            builder: (context, _) {
-              return Transform.translate(
-                offset: Offset(0, ballAnimations.answerAnimation.value),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 0),
-                  opacity: ballAnimations.answerAnimation.value,
-                  child: Transform(
-                    alignment: FractionalOffset.lerp(
-                      FractionalOffset.topLeft,
-                      FractionalOffset.bottomRight,
-                      0.5,
-                    ), //rotation from top center
-                    // 3D rotation effect
-                    transform: Matrix4.identity()
-                      ..setEntry(3, 2, 0.001)
-                      ..translate(
-                        0.0,
-                        -100.0 * (1 - ballAnimations.answerAnimation.value),
-                        0.0,
-                      )
-                      ..setRotationZ(
-                        alternateRotationDirection
-                            ? randomZAngle *
-                                ballAnimations.answerAnimation.value
-                            : -randomZAngle *
-                                ballAnimations.answerAnimation.value,
-                      )
-                      ..scale(1.5 -
-                          math.cos(ballAnimations.answerAnimation.value *
-                                  math.pi *
-                                  0.3) *
-                              1.0),
-                    child: MagicBallTriangle(
-                      magicAnswer: magicAnswer ?? '',
-                      size: MediaQuery.of(context).size.width * 0.4,
-                    ),
-                  ),
-                ),
-              );
-            },
           ),
         );
       },
@@ -280,174 +409,5 @@ class MagicBallPageState extends State<MagicBallPage>
     final appState = Provider.of<AppState>(context, listen: false);
     final initService = InitializationService(appState.sharedPreferencesUtils);
     await initService.initializeAll(appState.currentLanguage);
-  }
-}
-
-class RealisticBubbleEffect extends StatefulWidget {
-  final double size;
-  final int maxBubbles;
-  const RealisticBubbleEffect({
-    super.key,
-    this.size = 300,
-    this.maxBubbles = 12,
-  });
-
-  @override
-  State<RealisticBubbleEffect> createState() => _RealisticBubbleEffectState();
-}
-
-class _RealisticBubbleEffectState extends State<RealisticBubbleEffect>
-    with TickerProviderStateMixin {
-  final List<_BubbleModel> _bubbles = [];
-  bool _running = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _scheduleNextBubble();
-  }
-
-  void _scheduleNextBubble() {
-    if (!_running) return;
-    final delay = Duration(milliseconds: 300 + Random().nextInt(700));
-    Future.delayed(delay, () {
-      if (!_running) return;
-      if (_bubbles.length < widget.maxBubbles) {
-        setState(() {
-          _bubbles.add(_BubbleModel.random(widget.size, this, onRemove: () {
-            setState(() {});
-          }));
-        });
-      }
-      _scheduleNextBubble();
-    });
-  }
-
-  @override
-  void dispose() {
-    _running = false;
-    for (final b in _bubbles) {
-      b.dispose();
-    }
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipOval(
-      child: SizedBox(
-        width: widget.size,
-        height: widget.size,
-        child: Stack(
-          children:
-              _bubbles.where((b) => !b.removed).map((b) => b.build()).toList(),
-        ),
-      ),
-    );
-  }
-}
-
-class _BubbleModel {
-  final AnimationController controller;
-  final Animation<double> appearAnim;
-  final double startX, startY, endX, endY, size;
-  final double opacity;
-  bool removed = false;
-  final VoidCallback onRemove;
-
-  _BubbleModel._(
-    this.controller,
-    this.appearAnim,
-    this.startX,
-    this.startY,
-    this.endX,
-    this.endY,
-    this.size,
-    this.opacity,
-    this.onRemove,
-  );
-
-  factory _BubbleModel.random(double size, TickerProvider vsync,
-      {required VoidCallback onRemove}) {
-    final random = Random();
-    final radius = size / 2;
-    final centerX = size / 2;
-    final centerY = size / 2;
-
-    final bubbleSize = random.nextDouble() * 18 + 8;
-    final angle = random.nextDouble() * 2 * pi;
-    final distance = random.nextDouble() * (radius - bubbleSize);
-
-    final startX = centerX + distance * cos(angle);
-    final startY = centerY + distance * sin(angle);
-
-    final endY = startY - (radius * 0.8);
-    final endX = startX + (random.nextDouble() - 0.5) * radius * 0.3;
-
-    final duration = Duration(milliseconds: 1200 + random.nextInt(1800));
-    final opacity = random.nextDouble() * 0.4 + 0.4;
-
-    final controller = AnimationController(
-      vsync: vsync,
-      duration: duration,
-    )..forward();
-
-    final appearAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-          parent: controller,
-          curve: const Interval(0.0, 0.2, curve: Curves.easeOut)),
-    );
-
-    controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        onRemove();
-      }
-    });
-
-    return _BubbleModel._(
-      controller,
-      appearAnim,
-      startX,
-      startY,
-      endX,
-      endY,
-      bubbleSize,
-      opacity,
-      onRemove,
-    );
-  }
-
-  void dispose() => controller.dispose();
-
-  Widget build() {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        final t = Curves.easeInOut.transform(controller.value);
-        final x = lerpDouble(startX, endX, t)!;
-        final y = lerpDouble(startY, endY, t)!;
-        final scale = appearAnim.value * (0.8 + 0.4 * (1 - t));
-        final bubbleOpacity = opacity * (1 - t) * appearAnim.value;
-        if (controller.isCompleted) removed = true;
-        return Positioned(
-          left: x,
-          top: y,
-          child: Opacity(
-            opacity: bubbleOpacity,
-            child: Transform.scale(
-              scale: scale,
-              child: Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
   }
 }
