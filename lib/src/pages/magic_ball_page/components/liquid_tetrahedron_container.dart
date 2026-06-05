@@ -22,6 +22,8 @@ class _LiquidTetrahedronContainerState extends State<LiquidTetrahedronContainer>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _rotationAnimation;
+  
+  bool _hasStarted = false;
 
   @override
   void initState() {
@@ -42,7 +44,24 @@ class _LiquidTetrahedronContainerState extends State<LiquidTetrahedronContainer>
       CurvedAnimation(parent: _controller, curve: Curves.linear),
     );
 
-    _controller.forward(from: 0.0);
+    // Iniciar animación al montar el widget
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_hasStarted) {
+        _controller.forward(from: 0.0);
+        _hasStarted = true;
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(LiquidTetrahedronContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reiniciar animación solo si cambia la respuesta
+    if (oldWidget.initialAnswer != widget.initialAnswer) {
+      _controller.reset();
+      _controller.forward(from: 0.0);
+      _hasStarted = true;
+    }
   }
 
   @override
@@ -58,8 +77,7 @@ class _LiquidTetrahedronContainerState extends State<LiquidTetrahedronContainer>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        final rotationAngle =
-            _rotationAnimation.value * widget.sensorIntensity;
+        final rotationAngle = _rotationAnimation.value * widget.sensorIntensity;
 
         return FadeTransition(
           opacity: _fadeAnimation,

@@ -21,31 +21,18 @@ class BallFigure extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double sphereWidth = MediaQuery.of(context).size.width * 0.9;
-    return TweenAnimationBuilder(
-      duration: const Duration(milliseconds: 3000),
-      tween: Tween(begin: 0.0, end: 1.0),
-      curve: Curves.fastEaseInToSlowEaseOut,
-      builder: (context, value, _) {
-        return Transform.scale(
-          scale: value,
-          child: Transform.rotate(
-            angle: (2 * pi) * value,
-            child: AnimatedBuilder(
-              animation: ballAnimations.ballAnimation,
-              builder: (context, _) {
-                return Transform.translate(
-                  offset: Offset(
-                    bounce(ballAnimations.ballAnimation.value),
-                    sin(ballAnimations.ballAnimation.value * 500) * 25,
-                  ),
-                  child: SphereFigure(
-                      size: sphereWidth,
-                      shakeAnimation: ballAnimations
-                          .ballAnimation //sincronizacion de la animacion
-                      ), //figure of the magic ball
-                );
-              },
-            ),
+    
+    return AnimatedBuilder(
+      animation: ballAnimations.ballAnimation,
+      builder: (context, _) {
+        return Transform.translate(
+          offset: Offset(
+            bounce(ballAnimations.ballAnimation.value),
+            sin(ballAnimations.ballAnimation.value * 500) * 25,
+          ),
+          child: SphereFigure(
+            size: sphereWidth,
+            shakeAnimation: ballAnimations.ballAnimation,
           ),
         );
       },

@@ -47,9 +47,11 @@ class _LiquidTetrahedronState extends State<LiquidTetrahedron>
     _initRandom();
     _initControllers();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _mainController.forward();
-      _floatController.repeat(reverse: true);
-      _bubbleController.repeat();
+      if (mounted) {
+        _mainController.forward();
+        _floatController.repeat(reverse: true);
+        _bubbleController.repeat();
+      }
     });
   }
 

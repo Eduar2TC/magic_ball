@@ -1,70 +1,70 @@
 # Magic Ball
 
-Magic Ball es una aplicación Flutter inspirada en la clásica bola mágica de las respuestas. Haz una pregunta, agita la bola y recibe una respuesta mágica al instante. La app es personalizable, multilingüe y permite gestionar tus propias respuestas mágicas.
+Magic Ball is a Flutter app inspired by the classic "Magic 8-Ball". Ask a question, shake the ball, and get an instant magical answer. The app is customizable, supports multiple languages, and lets you manage your own answers.
 
-## Características
+## Features
 
-- **Animaciones realistas**: Bola mágica animada, efectos de burbujas y figuras 3D.
-- **Respuestas personalizables**: Agrega, edita o elimina tus propias frases mágicas.
-- **Soporte multilenguaje**: Español, inglés y portugués.
-- **Interfaz intuitiva**: Diseño moderno y fácil de usar.
-- **Configuración avanzada**: Personaliza colores, idioma y efectos visuales.
-- **Persistencia local**: Tus configuraciones y respuestas se guardan en el dispositivo.
+- Realistic animations: animated magic ball, bubble effects, and subtle 3D visuals.
+- Custom answers: add, edit, or remove your own magical responses.
+- Multilanguage support: English, Spanish, and Portuguese.
+- Intuitive UI: modern, easy-to-use interface.
+- Advanced settings: customize colors, language, and visual effects.
+- Local persistence: saved settings and answers stored on the device.
 
-## Capturas de pantalla
+## Screenshots
 
-*(Agrega aquí imágenes de la app si lo deseas)*
+Add screenshots from the `assets/` folder or use the App Store / Play Store images.
 
-## Instalación
+## Installation
 
-1. Clona este repositorio:
+1. Clone the repository:
    ```
-   git clone https://github.com/tu_usuario/magic_ball.git
+   git clone https://github.com/your_username/magic_ball.git
    ```
-2. Entra al directorio del proyecto:
+2. Enter the project directory:
    ```
    cd magic_ball
    ```
-3. Instala las dependencias:
+3. Install dependencies:
    ```
    flutter pub get
    ```
-4. Ejecuta la app:
+4. Run the app:
    ```
    flutter run
    ```
 
-## Uso
+## Usage
 
-1. Abre la aplicación.
-2. Haz una pregunta mentalmente o en voz alta.
-3. Agita el dispositivo o toca la bola mágica.
-4. Observa la animación y lee la respuesta mágica.
-5. Personaliza las respuestas y la configuración desde el menú de ajustes.
+1. Open the app.
+2. Think of a question or say it out loud.
+3. Shake the device or tap the magic ball.
+4. Watch the animation and read the magical answer.
+5. Customize responses and settings from the Settings menu.
 
-## Personalización
+## Customization
 
-- **Idiomas**: Cambia el idioma desde la pantalla de ajustes.
-- **Respuestas**: Accede a la lista mágica para agregar, editar o eliminar frases.
-- **Efectos**: Activa o desactiva efectos visuales desde la configuración.
+- Languages: change the app language from Settings.
+- Responses: open the answers list to add, edit, or remove phrases.
+- Effects: toggle visual effects from the Settings screen.
 
-## Estructura del proyecto
+## Project Structure
 
-- `lib/`: Código fuente principal de la app.
-  - `src/pages/`: Pantallas principales y widgets personalizados.
-  - `src/constants/`: Listas de respuestas por defecto.
-  - `src/utils/`: Utilidades y helpers.
-  - `l10n/`: Archivos de localización.
-- `assets/`: Recursos gráficos y de audio.
+- `lib/`: Main application code.
+  - `src/pages/`: Main screens and custom widgets.
+  - `src/constants/`: Default answer lists and constants.
+  - `src/utils/`: Utilities and helper functions.
+  - `l10n/`: Localization files.
+- `assets/`: Graphics and audio resources.
 
-## Contribuciones
+## Contributing
 
-¡Las contribuciones son bienvenidas! Abre un issue o haz un pull request para sugerir mejoras o reportar errores.
+Contributions are welcome! Please open an issue or submit a pull request to suggest improvements or report bugs.
 
-## Licencia
+## License
 
-Este proyecto está bajo la licencia MIT.
+This project is licensed under the MIT License.
 
 ---
 
-Desarrollado con ❤️ usando Flutter.
+Built with ❤️ using Flutter.

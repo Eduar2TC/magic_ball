@@ -5,6 +5,7 @@ class ShakingBubbleEffect extends StatefulWidget {
   final String magicAnswer;
   final double size;
 
+  // NOTA: shakeBurst ha sido eliminado por completo de aquí
   const ShakingBubbleEffect({
     super.key,
     required this.magicAnswer,
@@ -24,24 +25,23 @@ class _ShakingBubbleEffectState extends State<ShakingBubbleEffect>
   void initState() {
     super.initState();
     _bubbleController = AnimationController(
-      duration: const Duration(seconds: 3), // Slower animation
+      duration: const Duration(seconds: 2),
       vsync: this,
-    );
-    _bubbleController.forward();
+    )..repeat(); // Animación continua en bucle
+    
+    _generateBubbles();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void _generateBubbles() {
     _bubbles = List.generate(
       30,
       (index) => Bubble(
         controller: _bubbleController,
         initialOffset: Offset(
           math.Random().nextDouble() * widget.size,
-          widget.size + 50 * index,
+          widget.size + 40 * index,
         ),
-        size: 10 + math.Random().nextDouble() * 20,
+        size: 8 + math.Random().nextDouble() * 18,
       ),
     );
   }
@@ -58,9 +58,7 @@ class _ShakingBubbleEffectState extends State<ShakingBubbleEffect>
       child: Container(
         width: widget.size,
         height: widget.size,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-        ),
+        decoration: const BoxDecoration(shape: BoxShape.circle),
         child: Stack(
           alignment: AlignmentDirectional.topCenter,
           children: [
@@ -73,16 +71,8 @@ class _ShakingBubbleEffectState extends State<ShakingBubbleEffect>
                   fontSize: 40,
                   fontWeight: FontWeight.bold,
                   shadows: [
-                    Shadow(
-                      offset: Offset(3, 3),
-                      blurRadius: 3.0,
-                      color: Color.fromARGB(40, 35, 125, 0),
-                    ),
-                    Shadow(
-                      offset: Offset(5.0, 5.0),
-                      blurRadius: 8.0,
-                      color: Color.fromARGB(40, 35, 125, 255),
-                    ),
+                    Shadow(offset: Offset(3, 3), blurRadius: 3.0, color: Color.fromARGB(40, 35, 125, 0)),
+                    Shadow(offset: Offset(5.0, 5.0), blurRadius: 8.0, color: Color.fromARGB(40, 35, 125, 255)),
                   ],
                 ),
               ),
@@ -109,12 +99,13 @@ class Bubble extends AnimatedWidget {
   Widget build(BuildContext context) {
     final animation = CurvedAnimation(
       parent: listenable as AnimationController,
-      curve: Curves.easeInOut, // Smooth animation
+      curve: Curves.linear,
     );
+    
     final offset = Tween<Offset>(
       begin: initialOffset,
       end: Offset(
-        initialOffset.dx + (math.Random().nextDouble() - 0.5) * 200,
+        initialOffset.dx + (math.Random().nextDouble() - 0.5) * 100,
         -50,
       ),
     ).animate(animation);
@@ -122,16 +113,14 @@ class Bubble extends AnimatedWidget {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
-        final randomX = (math.Random().nextDouble() - 0.5) * 2;
-        const randomY = -1.0;
-        final dx = offset.value.dx + randomX * animation.value * 50;
-        final dy = offset.value.dy + randomY * animation.value * 50;
+        final dx = offset.value.dx;
+        final dy = initialOffset.dy + (offset.value.dy - initialOffset.dy) * animation.value;
 
         return Positioned(
           left: dx,
           top: dy,
           child: Opacity(
-            opacity: 1.0 - animation.value,
+            opacity: (1.0 - animation.value).clamp(0.0, 1.0),
             child: Container(
               width: size,
               height: size,

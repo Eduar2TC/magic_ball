@@ -1,211 +1,321 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
 class SensorService {
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
-  Timer? _shakeCoolDownTimer;
+  StreamSubscription<GyroscopeEvent>? _gyroscopeSubscription;
 
-  Function(double x, double y, double z)? onPositionChanged;
-  Function(double magnitude)? onShakeDetected;
-  Function()? onShakeEnded;
+  Function(double x, double y)? onPositionChanged;
+  Function(double intensity)? onShakeDetected;
+  
+  // ValueNotifiers para estados reactivos
+  final ValueNotifier<bool> isShakingActive = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> isDeviceMoving = ValueNotifier<bool>(false);
 
-  double _velocityX = 0.0;
-  double _velocityY = 0.0;
-  double _velocityZ = 0.0;
+  // Posición normalizada (-1.0 a 1.0)
   double _positionX = 0.0;
   double _positionY = 0.0;
-  double _positionZ = 0.0;
+
+  // Velocidad
+  double _velocityX = 0.0;
+  double _velocityY = 0.0;
+
+  static const double _boundaryLimit = 1.0;
+  static const double _friction = 0.80;
+  static const double _restThreshold = 0.002;
+  static const double _bounceRestitution = 0.15;
+
+  // Gravedad
+  double _gravX = 0.0;
+  double _gravY = 0.0;
+  double _gravZ = 0.0;
+  static const double _gravSmooth = 0.03;
+
+  double _rawX = 0.0;
+  double _rawY = 0.0;
+  double _rawZ = 0.0;
+
+  double _gyroX = 0.0;
+  double _gyroZ = 0.0;
+  static const double _gyroSmooth = 0.15;
+  static const double _gyroDeadzone = 0.12;
+
+  static const double _gyroForce = 0.020;
+  static const double _accelForce = 0.006;
+  static const double _accelDeadzone = 0.25;
+
+  // Configuración de sacudida
+  double _shakeThreshold = 15.0;
   
-  static const double _friction = 0.94;
-  static const double _sensitivity = 0.02;
-  static const double _maxVelocity = 12.0;
-  static const double _springForce = 0.1;
-  static const double _borderLimit = 0.85;
-  static const double _idleMovement = 0.0003;
+  // === ESTADO DE SACUDIDA CONTINUA ===
+  Timer? _shakeEndTimer;
   
-  double _smoothAccelX = 0.0;
-  double _smoothAccelY = 0.0;
-  double _smoothAccelZ = 0.0;
-  static const double _smoothFactor = 0.12;
+  // Valores para cálculo de movimiento
+  double _lastMagnitude = 0.0;
+  final List<double> _recentMagnitudes = [];
+  final List<double> _recentGyroX = [];
+  final List<double> _recentGyroZ = [];
   
-  static const double _shakeDebounce = 1000;
-  double _shakeThreshold = 2.5;
-  DateTime? _lastShakeTime;
-  int _shakeCount = 0;
-  static const int _maxShakesPerMinute = 10;
-  bool _isShaking = false;
-  bool _isInCoolDown = false;
+  // Umbrales
+  static const double _motionThreshold = 0.9;
+  static const double _gyroMotionThreshold = 0.18;
+  static const int _historySizeForMotion = 4;
+  static const double _motionRatioRequired = 0.65;
+  static const int _shakeEndDelayMs = 800; // Aumentado para mejor detección
   
-  final List<double> _magnitudeHistory = [];
-  static const int _historySize = 5;
-  
-  DateTime? _lastUpdateTime;
+  // Para quietud de la bola
+  bool _deviceIsStill = true;
+  DateTime? _lastMotionTime;
+  static const int _stillTimeoutMs = 900;
+
+  Timer? _physicsTimer;
+  bool _isRunning = false;
+
+  bool get isListening => _isRunning;
 
   void setShakeSensitivity(double sensitivity) {
-    _shakeThreshold = sensitivity.clamp(1.5, 10.0);
+    _shakeThreshold = 22.0 - (sensitivity * 12.0);
+    _shakeThreshold = _shakeThreshold.clamp(9.0, 22.0);
   }
 
   void startListening() {
-    if (_accelerometerSubscription != null) return;
-    _lastUpdateTime = DateTime.now();
-    _accelerometerSubscription = accelerometerEvents.listen(_onAccelerometerEvent);
-  }
-
-  void _onAccelerometerEvent(AccelerometerEvent event) {
-    final now = DateTime.now();
-    final deltaTime = _lastUpdateTime != null 
-        ? (now.difference(_lastUpdateTime!).inMicroseconds / 1000000.0).clamp(0.001, 0.1)
-        : 0.016;
-    _lastUpdateTime = now;
-    
-    _smoothAccelX += (event.x - _smoothAccelX) * _smoothFactor;
-    _smoothAccelY += (event.y - _smoothAccelY) * _smoothFactor;
-    _smoothAccelZ += (event.z - _smoothAccelZ) * _smoothFactor;
-    
-    final rawMagnitude = math.sqrt(
-      event.x * event.x + event.y * event.y + event.z * event.z,
+    if (_isRunning) return;
+    _isRunning = true;
+    _physicsTimer = Timer.periodic(
+      const Duration(milliseconds: 16),
+      (_) => _stepPhysics(),
     );
-    _magnitudeHistory.add(rawMagnitude);
-    if (_magnitudeHistory.length > _historySize) {
-      _magnitudeHistory.removeAt(0);
-    }
-    
-    final peakMagnitude = _magnitudeHistory.isNotEmpty
-        ? _magnitudeHistory.reduce(math.max)
-        : rawMagnitude;
-    _detectShake(peakMagnitude);
-    
-    _updatePhysics(_smoothAccelX, _smoothAccelY, _smoothAccelZ, deltaTime);
+    _accelerometerSubscription =
+        accelerometerEvents.listen(_onAccelerometerEvent);
+    _gyroscopeSubscription =
+        gyroscopeEvents.listen(_onGyroscopeEvent);
   }
 
-  void _updatePhysics(double accelX, double accelY, double accelZ, double deltaTime) {
-    _velocityX += accelX * _sensitivity * deltaTime * 60.0;
-    _velocityY += accelY * _sensitivity * deltaTime * 60.0;
-    _velocityZ += accelZ * _sensitivity * deltaTime * 60.0;
-    
-    final speed = math.sqrt(_velocityX * _velocityX + _velocityY * _velocityY + _velocityZ * _velocityZ);
-    if (speed > _maxVelocity) {
-      final scale = _maxVelocity / speed;
-      _velocityX *= scale;
-      _velocityY *= scale;
-      _velocityZ *= scale;
+  void stopListening() {
+    _isRunning = false;
+    _physicsTimer?.cancel();
+    _accelerometerSubscription?.cancel();
+    _gyroscopeSubscription?.cancel();
+    _physicsTimer = null;
+    _accelerometerSubscription = null;
+    _gyroscopeSubscription = null;
+    _cancelShakeEndTimer();
+    if (isShakingActive.value) {
+      isShakingActive.value = false;
     }
-    
-    _velocityX *= _friction;
-    _velocityY *= _friction;
-    _velocityZ *= _friction;
-    
-    if (speed < 0.01) {
-      _velocityX += (math.Random().nextDouble() - 0.5) * _idleMovement;
-      _velocityY += (math.Random().nextDouble() - 0.5) * _idleMovement;
-      _velocityZ += (math.Random().nextDouble() - 0.5) * _idleMovement;
+    if (isDeviceMoving.value) {
+      isDeviceMoving.value = false;
     }
-    
-    _positionX += _velocityX * deltaTime * 60.0;
-    _positionY += _velocityY * deltaTime * 60.0;
-    _positionZ += _velocityZ * deltaTime * 60.0;
-    
-    _applyBorderSpring(_positionX, _velocityX, _borderLimit, (newPos, newVel) {
-      _positionX = newPos;
-      _velocityX = newVel;
-    });
-    _applyBorderSpring(_positionY, _velocityY, _borderLimit, (newPos, newVel) {
-      _positionY = newPos;
-      _velocityY = newVel;
-    });
-    _applyBorderSpring(_positionZ, _velocityZ, _borderLimit, (newPos, newVel) {
-      _positionZ = newPos;
-      _velocityZ = newVel;
-    });
-    
-    onPositionChanged?.call(_positionX, _positionY, _positionZ);
-  }
-
-  void _applyBorderSpring(double position, double velocity, double limit, Function(double, double) onUpdate) {
-    if (position > limit) {
-      final overshoot = position - limit;
-      velocity -= overshoot * _springForce;
-      position = limit;
-      if (velocity > 0) velocity *= -0.4;
-      onUpdate(position, velocity);
-    } else if (position < -limit) {
-      final overshoot = -limit - position;
-      velocity += overshoot * _springForce;
-      position = -limit;
-      if (velocity < 0) velocity *= -0.4;
-      onUpdate(position, velocity);
-    }
-  }
-
-  void _detectShake(double magnitude) {
-    if (_isInCoolDown) return;
-
-    final now = DateTime.now();
-    
-    if (_lastShakeTime == null || now.difference(_lastShakeTime!).inSeconds > 60) {
-      _shakeCount = 0;
-    }
-
-    final timeSinceLastShake = _lastShakeTime == null
-        ? _shakeDebounce + 1
-        : now.difference(_lastShakeTime!).inMilliseconds.toDouble();
-
-    if (magnitude > _shakeThreshold && 
-        timeSinceLastShake > _shakeDebounce && 
-        _shakeCount < _maxShakesPerMinute) {
-      if (!_isShaking) {
-        _isShaking = true;
-        _shakeCount++;
-        _lastShakeTime = now;
-        HapticFeedback.mediumImpact();
-        onShakeDetected?.call(magnitude);
-        if (_shakeCount >= _maxShakesPerMinute) {
-          _startCoolDown();
-        }
-      }
-    } else if (magnitude < _shakeThreshold * 0.3 && _isShaking) {
-      _isShaking = false;
-      onShakeEnded?.call();
-    }
-  }
-
-  void _startCoolDown() {
-    _isInCoolDown = true;
-    _shakeCoolDownTimer?.cancel();
-    _shakeCoolDownTimer = Timer(const Duration(seconds: 20), () {
-      _isInCoolDown = false;
-      _shakeCount = 0;
-    });
   }
 
   void resetPosition() {
     _positionX = 0.0;
     _positionY = 0.0;
-    _positionZ = 0.0;
     _velocityX = 0.0;
     _velocityY = 0.0;
-    _velocityZ = 0.0;
-    _smoothAccelX = 0.0;
-    _smoothAccelY = 0.0;
-    _smoothAccelZ = 0.0;
-    _magnitudeHistory.clear();
+    _lastMotionTime = null;
+    _deviceIsStill = true;
+    onPositionChanged?.call(0.0, 0.0);
   }
-
-  bool get isListening => _accelerometerSubscription != null;
-  bool get isShaking => _isShaking;
 
   void dispose() {
     stopListening();
-    _shakeCoolDownTimer?.cancel();
+    _cancelShakeEndTimer();
+    isShakingActive.dispose();
+    isDeviceMoving.dispose();
     onPositionChanged = null;
     onShakeDetected = null;
-    onShakeEnded = null;
   }
 
-  void stopListening() {
-    _accelerometerSubscription?.cancel();
-    _accelerometerSubscription = null;
+  void _cancelShakeEndTimer() {
+    _shakeEndTimer?.cancel();
+    _shakeEndTimer = null;
+  }
+
+  void _onAccelerometerEvent(AccelerometerEvent event) {
+    if (!_isRunning) return;
+
+    _rawX = event.x;
+    _rawY = event.y;
+    _rawZ = event.z;
+
+    _gravX += (event.x - _gravX) * _gravSmooth;
+    _gravY += (event.y - _gravY) * _gravSmooth;
+    _gravZ += (event.z - _gravZ) * _gravSmooth;
+
+    final rawMag = math.sqrt(
+      event.x * event.x + event.y * event.y + event.z * event.z,
+    );
+    
+    _updateShakingState(rawMag);
+    _detectShakeEvent(rawMag);
+    _updateStillState(rawMag);
+  }
+
+  void _onGyroscopeEvent(GyroscopeEvent event) {
+    if (!_isRunning) return;
+    _gyroX += (event.x - _gyroX) * _gyroSmooth;
+    _gyroZ += (event.z - _gyroZ) * _gyroSmooth;
+  }
+
+  void _updateShakingState(double magnitude) {
+    _recentMagnitudes.add(magnitude);
+    _recentGyroX.add(_gyroX.abs());
+    _recentGyroZ.add(_gyroZ.abs());
+    
+    while (_recentMagnitudes.length > _historySizeForMotion) {
+      _recentMagnitudes.removeAt(0);
+    }
+    while (_recentGyroX.length > _historySizeForMotion) {
+      _recentGyroX.removeAt(0);
+      _recentGyroZ.removeAt(0);
+    }
+    
+    bool hasMotion = _hasSignificantMotion();
+    
+    // Actualizar isDeviceMoving
+    if (isDeviceMoving.value != hasMotion) {
+      isDeviceMoving.value = hasMotion;
+    }
+    
+    if (hasMotion) {
+      _cancelShakeEndTimer();
+      
+      if (!isShakingActive.value) {
+        isShakingActive.value = true;
+        HapticFeedback.lightImpact();
+      }
+    } else {
+      if (isShakingActive.value && (_shakeEndTimer == null || !_shakeEndTimer!.isActive)) {
+        _shakeEndTimer = Timer(Duration(milliseconds: _shakeEndDelayMs), () {
+          if (_isRunning && isShakingActive.value) {
+            isShakingActive.value = false;
+          }
+          _shakeEndTimer = null;
+        });
+      }
+    }
+    
+    _lastMagnitude = magnitude;
+  }
+  
+  bool _hasSignificantMotion() {
+    if (_recentMagnitudes.length < _historySizeForMotion) return false;
+    
+    int motionFrames = 0;
+    
+    for (int i = 1; i < _recentMagnitudes.length; i++) {
+      final delta = (_recentMagnitudes[i] - _recentMagnitudes[i - 1]).abs();
+      if (delta > _motionThreshold) {
+        motionFrames++;
+      }
+    }
+    
+    for (int i = 0; i < _recentGyroX.length; i++) {
+      if (_recentGyroX[i] > _gyroMotionThreshold || 
+          _recentGyroZ[i] > _gyroMotionThreshold) {
+        motionFrames++;
+      }
+    }
+    
+    final totalChecks = (_recentMagnitudes.length - 1) + _recentGyroX.length;
+    if (totalChecks == 0) return false;
+    
+    final motionRatio = motionFrames / totalChecks;
+    return motionRatio >= _motionRatioRequired;
+  }
+
+  void _detectShakeEvent(double magnitude) {
+    if (_recentMagnitudes.length < 2) return;
+    
+    double maxDelta = 0;
+    for (int i = 1; i < _recentMagnitudes.length; i++) {
+      final delta = (_recentMagnitudes[i] - _recentMagnitudes[i - 1]).abs();
+      if (delta > maxDelta) maxDelta = delta;
+    }
+    
+    if (maxDelta > _shakeThreshold) {
+      final intensity = ((maxDelta - _shakeThreshold) / 5.0).clamp(0.3, 1.5);
+      HapticFeedback.mediumImpact();
+      onShakeDetected?.call(intensity);
+    }
+  }
+
+  void _stepPhysics() {
+    if (!_isRunning) return;
+
+    if (!_deviceIsStill) {
+      final linX = _rawX - _gravX;
+      final linY = _rawY - _gravY;
+      final linZ = _rawZ - _gravZ;
+
+      final screenFX = linX;
+      final screenFY = linY * 0.4 + linZ * 0.7;
+      final linearMag = math.sqrt(screenFX * screenFX + screenFY * screenFY);
+
+      if (linearMag > _accelDeadzone) {
+        _velocityX += screenFX * _accelForce;
+        _velocityY += -screenFY * _accelForce;
+      }
+
+      if (_gyroX.abs() > _gyroDeadzone) {
+        _velocityY += -_gyroX * _gyroForce;
+      }
+      if (_gyroZ.abs() > _gyroDeadzone) {
+        _velocityX += _gyroZ * _gyroForce;
+      }
+    }
+
+    _velocityX *= _friction;
+    _velocityY *= _friction;
+
+    if (_velocityX.abs() < _restThreshold) _velocityX = 0.0;
+    if (_velocityY.abs() < _restThreshold) _velocityY = 0.0;
+
+    _positionX += _velocityX;
+    _positionY += _velocityY;
+
+    if (_positionX > _boundaryLimit) {
+      _positionX = _boundaryLimit;
+      _velocityX = -_velocityX.abs() * _bounceRestitution;
+    } else if (_positionX < -_boundaryLimit) {
+      _positionX = -_boundaryLimit;
+      _velocityX = _velocityX.abs() * _bounceRestitution;
+    }
+    if (_positionY > _boundaryLimit) {
+      _positionY = _boundaryLimit;
+      _velocityY = -_velocityY.abs() * _bounceRestitution;
+    } else if (_positionY < -_boundaryLimit) {
+      _positionY = -_boundaryLimit;
+      _velocityY = _velocityY.abs() * _bounceRestitution;
+    }
+
+    if (_deviceIsStill) {
+      _positionX *= 0.95;
+      _positionY *= 0.95;
+      _velocityX = 0.0;
+      _velocityY = 0.0;
+    }
+
+    onPositionChanged?.call(_positionX, _positionY);
+  }
+
+  void _updateStillState(double rawMag) {
+    const double gravity = 9.8;
+    final deviation = (rawMag - gravity).abs();
+    final gyroActive = _gyroX.abs() > _gyroDeadzone || _gyroZ.abs() > _gyroDeadzone;
+
+    if (deviation > 0.40 || gyroActive) {
+      _deviceIsStill = false;
+      _lastMotionTime = DateTime.now();
+    } else if (_lastMotionTime != null) {
+      final elapsed = DateTime.now().difference(_lastMotionTime!).inMilliseconds;
+      if (elapsed > _stillTimeoutMs) _deviceIsStill = true;
+    } else {
+      _deviceIsStill = true;
+    }
   }
 }

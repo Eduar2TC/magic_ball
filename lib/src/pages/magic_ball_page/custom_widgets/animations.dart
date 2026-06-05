@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class BallAnimations {
-  late Animation<double> ballAnimation; //animation0
-  late Animation<double> answerAnimation; //animation1
-  late AnimationController ballAnimationController; //controller0
-  late AnimationController answerAnimationController; //controller1
+  late Animation<double> ballAnimation;
+  late Animation<double> answerAnimation;
+  late AnimationController ballAnimationController;
+  late AnimationController answerAnimationController;
   final ValueNotifier<void> stateNotifier;
 
   BallAnimations(this.stateNotifier);
@@ -16,12 +16,8 @@ class BallAnimations {
     )
       ..addListener(() => stateNotifier.value = null)
       ..addStatusListener((status) {
-        if (status == AnimationStatus.forward) {
-          answerAnimationController.reverse();
-        } else if (status == AnimationStatus.completed) {
-         ballAnimationController.reverse();
-        } else if (status == AnimationStatus.dismissed) {
-          answerAnimationController.forward();
+        if (status == AnimationStatus.completed) {
+          ballAnimationController.reverse();
         }
       });
 

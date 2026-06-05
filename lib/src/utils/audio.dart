@@ -1,33 +1,57 @@
-import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:flutter/foundation.dart';
 
 class Audio {
   static final Audio _instance = Audio._internal();
+  factory Audio() => _instance;
 
-  late AudioPlayer audioPlayer;
-  AssetSource? _shakeBall;
-  AssetSource? _pop;
-
-  factory Audio() {
-    return _instance;
-  }
+  late final AudioPlayer _shakePlayer;
+  late final AudioPlayer _popPlayer;
 
   Audio._internal() {
-    audioPlayer = AudioPlayer();
-    initSources();
+    _shakePlayer = AudioPlayer();
+    _popPlayer = AudioPlayer();
+
+    // Precarga de audios desde assets
+    _loadAudioAssets();
+    
+    _shakePlayer.setVolume(1.0);
+    _popPlayer.setVolume(1.0);
   }
 
-  void initSources() {
-    audioPlayer.setPlayerMode(PlayerMode.mediaPlayer);
-    audioPlayer.setVolume(1.0);
-    _shakeBall = AssetSource('audio/ball/shake.mp3');
-    _pop = AssetSource('audio/ball/pop.wav');
+  Future<void> _loadAudioAssets() async {
+    try {
+      await _shakePlayer.setAsset('assets/audio/ball/shake.wav');
+      await _popPlayer.setAsset('assets/audio/ball/pop.wav');
+    } catch (e) {
+      debugPrint('❌ Error al cargar audios: $e');
+    }
   }
 
-  void playShake() {
-    audioPlayer.stop().then((value) => audioPlayer.play(_shakeBall!));
+  void startShakeLoop() async {
+    await _shakePlayer.setLoopMode(LoopMode.one);
+    await _shakePlayer.play();
   }
 
-  void playPop() {
-    audioPlayer.play(_pop!);
+  void stopShakeLoop() {
+    _shakePlayer.pause();
+    _shakePlayer.seek(Duration.zero);
+  }
+
+  void playShakeOneShot() async {
+    await _shakePlayer.setLoopMode(LoopMode.off);
+    await _shakePlayer.seek(Duration.zero);
+    await _shakePlayer.play();
+  }
+
+  void playPop() async {
+    debugPrint('🔊 [AUDIO] Disparando sonido POP');
+    await _popPlayer.seek(Duration.zero);
+    await _popPlayer.play();
+  }
+
+  void dispose() {
+    _shakePlayer.dispose();
+    _popPlayer.dispose();
   }
 }
